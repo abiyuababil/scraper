@@ -1,0 +1,5 @@
+instaloader
+easyocr
+pillow
+requests
+pandas

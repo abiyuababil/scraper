@@ -1,0 +1,13 @@
+# Sessions & Credentials (JANGAN SAMPAI TER-PUSH)
+session-*
+*.session
+
+# Output Results
+results/
+
+# Python cache & virtualenv
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
