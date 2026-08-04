@@ -105,4 +105,4 @@ if __name__ == "__main__":
     print("  Server berjalan di: http://localhost:8000")
     print("  Buka browser dan akses URL di atas!")
     print("=" * 60)
-    uvicorn.run("web_app.py:app" if os.path.exists("web_app.py") else app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("web_app:app", host="127.0.0.1", port=8000, reload=True)
