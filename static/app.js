@@ -597,7 +597,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!resp.ok) throw new Error("Gagal menyimpan ke archive.json");
 
                 const resData = await resp.json();
-                showToast(`✅ Berhasil menyimpan ${resData.added} data baru (${resData.updated} diperbarui) ke archive.json!`, "success");
+                if (resData.auto_pushed) {
+                    showToast(`✅ Berhasil menyimpan & otomatis sync ke GitHub Pages! (${resData.added} baru, ${resData.updated} diperbarui)`, "success");
+                } else {
+                    showToast(`✅ Berhasil menyimpan ${resData.added} data baru ke archive.json!`, "success");
+                }
             } catch (err) {
                 console.error(err);
                 showToast("Gagal menyimpan ke archive.json", "error");

@@ -249,11 +249,24 @@ def save_to_archive(payload: ArchiveSaveRequest):
     with open(archive_file, "w", encoding="utf-8") as f:
         json.dump(existing_data, f, indent=2, ensure_ascii=False)
 
+    # Auto Git Commit & Push ke GitHub secara otomatis di background!
+    import subprocess
+    auto_pushed = False
+    try:
+        subprocess.run(["git", "add", "archive.json"], cwd=BASE_DIR, check=True)
+        subprocess.run(["git", "commit", "-m", f"auto-archive: update archive.json ({added_count} new, {updated_count} updated)"], cwd=BASE_DIR, check=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR, check=True)
+        auto_pushed = True
+        print(f"[AutoGitSync] ✅ Berhasil push archive.json otomatis ke GitHub Pages!")
+    except Exception as e:
+        print(f"[AutoGitSync] Catatan: Auto-push skipped ({e})")
+
     return {
         "success": True,
         "total_archived": len(existing_data),
         "added": added_count,
         "updated": updated_count,
+        "auto_pushed": auto_pushed,
         "archive_file": archive_file
     }
 
