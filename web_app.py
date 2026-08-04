@@ -79,14 +79,19 @@ def process_posts(payload: ProcessRequest):
         else:
             classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
 
+        # Dapatkan teks OCR khusus untuk gambar selebaran jika ada
+        selebaran_url = classified.get("selebaran")
+        selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
+
         results.append({
             "kamisan_number": post_data["kamisan_number"],
             "post_url": post_data["post_url"],
             "date_utc": post_data["date_utc"],
             "caption": post_data["caption"],
-            "selebaran": classified["selebaran"],
-            "foto": classified["foto"],
-            "ocr_texts": classified["ocr_texts"],
+            "selebaran": selebaran_url,
+            "selebaran_ocr_text": selebaran_ocr_text,
+            "foto": classified.get("foto", []),
+            "ocr_texts": classified.get("ocr_texts", {}),
             "error": None
         })
 

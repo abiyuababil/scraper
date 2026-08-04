@@ -390,6 +390,118 @@ body {
     gap: 0.5rem;
 }
 
+/* Media Gallery Previews */
+.media-gallery-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.gallery-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+.media-thumb-wrapper {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--card-border);
+    aspect-ratio: 1 / 1;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.media-thumb-wrapper:hover {
+    transform: scale(1.03);
+    border-color: var(--primary);
+}
+
+.media-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.thumb-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+
+.badge-selebaran {
+    background: rgba(236, 72, 153, 0.85);
+    color: white;
+}
+
+.badge-foto {
+    background: rgba(99, 102, 241, 0.85);
+    color: white;
+}
+
+.section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* OCR Text Section */
+.ocr-text-section {
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ocr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h5 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--success);
+    }
+}
+
+.ocr-content-box {
+    font-family: var(--font-code);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #d1d5db;
+    white-space: pre-wrap;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.text-muted {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* Utility */
 .hidden {
     display: none !important;

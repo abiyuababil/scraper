@@ -84,16 +84,80 @@ https://www.instagram.com/p/C-K67890/`;
             card.className = "result-card";
 
             const formattedText = formatSingleText(item);
+            
+            // Build Image Previews HTML
+            let mediaPreviewHtml = "";
+            if (item.selebaran || (item.foto && item.foto.length > 0)) {
+                mediaPreviewHtml += `<div class="media-gallery-section">
+                    <h5 class="gallery-title"><i class="fa-solid fa-images"></i> Pratinjau Gambar</h5>
+                    <div class="gallery-grid">`;
+                
+                if (item.selebaran) {
+                    mediaPreviewHtml += `
+                        <div class="media-thumb-wrapper selebaran-thumb">
+                            <span class="thumb-badge badge-selebaran"><i class="fa-solid fa-file-text"></i> Selebaran</span>
+                            <a href="${item.selebaran}" target="_blank" title="Klik untuk membuka gambar penuh">
+                                <img src="${item.selebaran}" alt="Selebaran" class="media-img" loading="lazy" referrerpolicy="no-referrer" />
+                            </a>
+                        </div>`;
+                }
+
+                if (item.foto && item.foto.length > 0) {
+                    item.foto.forEach((fotoUrl, fIdx) => {
+                        mediaPreviewHtml += `
+                            <div class="media-thumb-wrapper foto-thumb">
+                                <span class="thumb-badge badge-foto"><i class="fa-solid fa-camera"></i> Foto #${fIdx + 1}</span>
+                                <a href="${fotoUrl}" target="_blank" title="Klik untuk membuka gambar penuh">
+                                    <img src="${fotoUrl}" alt="Foto Aksi ${fIdx + 1}" class="media-img" loading="lazy" referrerpolicy="no-referrer" />
+                                </a>
+                            </div>`;
+                    });
+                }
+
+                mediaPreviewHtml += `</div></div>`;
+            }
+
+            // Build OCR Text Block for Selebaran HTML
+            let ocrTextBlockHtml = "";
+            if (item.selebaran_ocr_text) {
+                ocrTextBlockHtml = `
+                    <div class="ocr-text-section">
+                        <div class="ocr-header">
+                            <h5><i class="fa-solid fa-align-left"></i> Hasil OCR Teks Selebaran</h5>
+                            <button class="btn btn-sm btn-outline btn-copy-ocr" data-index="${index}">
+                                <i class="fa-solid fa-copy"></i> Salin Teks OCR Selebaran
+                            </button>
+                        </div>
+                        <div class="ocr-content-box">${escapeHtml(item.selebaran_ocr_text)}</div>
+                    </div>
+                `;
+            } else if (item.selebaran) {
+                ocrTextBlockHtml = `
+                    <div class="ocr-text-section">
+                        <div class="ocr-header">
+                            <h5><i class="fa-solid fa-align-left"></i> Hasil OCR Teks Selebaran</h5>
+                        </div>
+                        <div class="ocr-content-box text-muted">Tidak ada teks signifikan yang terdeteksi di selebaran ini.</div>
+                    </div>
+                `;
+            }
 
             card.innerHTML = `
                 <div class="card-top">
                     <span class="kamisan-title">Kamisan ke-${item.kamisan_number}</span>
                     <span class="help-text">Post #${index + 1}</span>
                 </div>
+                
+                ${mediaPreviewHtml}
+
+                <div class="section-title"><i class="fa-solid fa-code"></i> Format Teks Terkompilasi</div>
                 <div class="result-text-block">${escapeHtml(formattedText)}</div>
+                
+                ${ocrTextBlockHtml}
+
                 <div class="card-actions">
                     <button class="btn btn-sm btn-secondary btn-copy-card" data-index="${index}">
-                        <i class="fa-solid fa-copy"></i> Salin Post Ini
+                        <i class="fa-solid fa-copy"></i> Salin Format Post Ini
                     </button>
                 </div>
             `;
@@ -107,7 +171,17 @@ https://www.instagram.com/p/C-K67890/`;
                 const idx = e.currentTarget.getAttribute("data-index");
                 const textToCopy = formatSingleText(results[idx]);
                 copyToClipboard(textToCopy);
-                showToast("Teks post berhasil disalin!");
+                showToast("Format teks post berhasil disalin!");
+            });
+        });
+
+        // Event listener for OCR text copy buttons
+        document.querySelectorAll(".btn-copy-ocr").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const idx = e.currentTarget.getAttribute("data-index");
+                const ocrText = results[idx].selebaran_ocr_text || "";
+                copyToClipboard(ocrText);
+                showToast("Teks OCR Selebaran berhasil disalin!");
             });
         });
     }
