@@ -63,11 +63,31 @@ document.addEventListener("DOMContentLoaded", () => {
 https://www.instagram.com/p/C-K67890/`;
     });
 
+    // --- Smart Parser Input Teks ---
+    function parseInputUrls(text) {
+        if (!text || !text.trim()) return [];
+        
+        // Match pola "796 : http..." atau "http..." di mana saja di dalam teks input
+        const regex = /(?:(\d+)\s*[:\-]\s*)?(https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel)\/[A-Za-z0-9_\-]+[^\s]*)/gi;
+        const matches = [...text.matchAll(regex)];
+        
+        if (matches.length > 0) {
+            return matches.map(m => {
+                const num = m[1];
+                const url = m[2];
+                return num ? `${num} : ${url}` : url;
+            });
+        }
+        
+        // Fallback split per line
+        return text.trim().split("\n").map(u => u.trim()).filter(u => u.length > 0);
+    }
+
     // --- Submit Button Handler ---
     btnSubmit.addEventListener("click", async (e) => {
         if (e) e.preventDefault();
         
-        const rawUrls = urlInput.value.trim().split("\n").map(u => u.trim()).filter(u => u.length > 0);
+        const rawUrls = parseInputUrls(urlInput.value);
         if (rawUrls.length === 0) {
             showToast("Silakan masukkan minimal 1 URL post Instagram!", "warning");
             return;
