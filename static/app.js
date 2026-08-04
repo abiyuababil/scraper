@@ -253,6 +253,9 @@ https://www.instagram.com/p/C-K67890/`;
         return lines.join("\n");
     }
 
+    // Global Export Buttons
+    const btnExportJanganDiam = document.getElementById("btn-export-jangandiam");
+
     // --- Export & Copy All Handlers ---
     btnCopyAll.addEventListener("click", () => {
         if (!currentResults.length) return;
@@ -267,30 +270,97 @@ https://www.instagram.com/p/C-K67890/`;
         downloadFile(allText, "kamisan_formatted.txt", "text/plain");
     });
 
-    btnExportJson.addEventListener("click", () => {
+    // --- Export JSON Format "Jangan-Diam.github.io" Schema ---
+    btnExportJanganDiam.addEventListener("click", () => {
         if (!currentResults.length) return;
-        const jsonStr = JSON.stringify(currentResults, null, 2);
-        downloadFile(jsonStr, "kamisan_data.json", "application/json");
+
+        const janganDiamSchema = currentResults.map(item => {
+            const actNum = item.kamisan_number || "";
+            const dateStr = item.date_utc ? item.date_utc.split("T")[0] : "";
+            const ocrText = item.selebaran_ocr_text || "";
+            
+            // Reconstruct textBody ke tag HTML <p>
+            const paragraphs = ocrText.split("\n")
+                                      .filter(p => p.trim().length > 0)
+                                      .map(p => `<p>${escapeHtml(p)}</p>`)
+                                      .join("");
+
+            const attachments = [];
+            if (item.selebaran) {
+                attachments.push({
+                    "type": "naskah",
+                    "title": "Hasil Pindaian Surat Terbuka",
+                    "subtitle": `Surat Terbuka Aksi Kamisan #${actNum}`,
+                    "icon": "lucide:file-text",
+                    "imageUrl": item.selebaran,
+                    "footer": "Naskah Surat Terbuka"
+                });
+            }
+
+            if (item.foto && item.foto.length > 0) {
+                item.foto.forEach((fotoUrl, fIdx) => {
+                    attachments.push({
+                        "type": "foto",
+                        "title": "Dokumentasi Aksi Lapangan",
+                        "subtitle": `Foto Aksi Kamisan #${actNum} (${fIdx + 1})`,
+                        "icon": "lucide:camera",
+                        "imageUrl": fotoUrl,
+                        "footer": `Foto Aksi #${actNum}`
+                    });
+                });
+            }
+
+            return {
+                "id": actNum,
+                "actNum": actNum,
+                "docNum": "",
+                "date": dateStr,
+                "title": `Surat Terbuka #${actNum}`,
+                "tags": ["Aksi Kamisan"],
+                "summary": item.caption ? item.caption.substring(0, 180).replace(/["\r\n]/g, " ") : "",
+                "insights": [],
+                "casesReferred": [],
+                "source": "Selebaran Aksi Kamisan / JSKK",
+                "sourceUrl": item.post_url,
+                "textBody": paragraphs || "<p></p>",
+                "attachments": attachments
+            };
+        });
+
+        const jsonStr = JSON.stringify(janganDiamSchema, null, 2);
+        downloadFile(jsonStr, "archive_jangan_diam.json", "application/json");
+        showToast("File JSON schema 'Jangan-Diam' berhasil diunduh!");
     });
 
+    // --- Export CSV Spreadsheet Komprehensif ---
     btnExportCsv.addEventListener("click", () => {
         if (!currentResults.length) return;
-        const headers = ["kamisan_number", "post_url", "date_utc", "selebaran", "foto"];
-        const rows = [headers.join(",")];
+        
+        // Header kolom CSV
+        const headers = ["No Aksi", "Tanggal", "URL Sumber Post IG", "URL Gambar Selebaran", "List URL Foto Aksi", "Teks OCR Selebaran", "Caption IG"];
+        const rows = [headers.map(h => `"${h}"`).join(",")];
 
         currentResults.forEach(item => {
             const fotoStr = (item.foto || []).join(" | ");
+            const ocrClean = (item.selebaran_ocr_text || "").replace(/"/g, '""');
+            const captionClean = (item.caption || "").replace(/"/g, '""');
+
             const row = [
-                item.kamisan_number,
+                `"${item.kamisan_number}"`,
+                `"${item.date_utc ? item.date_utc.split("T")[0] : ""}"`,
                 `"${item.post_url}"`,
-                `"${item.date_utc || ""}"`,
                 `"${item.selebaran || ""}"`,
-                `"${fotoStr}"`
+                `"${fotoStr}"`,
+                `"${ocrClean}"`,
+                `"${captionClean}"`
             ];
             rows.push(row.join(","));
         });
 
-        downloadFile(rows.join("\n"), "kamisan_data.csv", "text/csv");
+        // Sertakan UTF-8 BOM (\uFEFF) agar dibuka sempurna di Microsoft Excel / Google Sheets
+        const csvContent = "\uFEFF" + rows.join("\n");
+        downloadFile(csvContent, "kamisan_spreadsheet.csv", "text/csv;charset=utf-8;");
+        showToast("File CSV Spreadsheet berhasil diunduh!");
     });
 
     // --- Helper Functions ---
