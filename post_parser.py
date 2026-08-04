@@ -96,6 +96,12 @@ def fetch_post_details(url_or_shortcode: str) -> dict:
             "date_utc": ""
         }
 
+    # Cek apakah ada nomor awalan di input (misal: "796 : https://...")
+    num_hint = "?"
+    num_match = re.match(r'^\s*(\d+)\s*[:\-]', url_or_shortcode)
+    if num_match:
+        num_hint = num_match.group(1)
+
     post_url = f"https://www.instagram.com/p/{shortcode}/"
     L = get_loader()
 
@@ -104,6 +110,8 @@ def fetch_post_details(url_or_shortcode: str) -> dict:
         
         caption = post.caption or ""
         kamisan_num = extract_kamisan_number(caption)
+        if kamisan_num == "?" and num_hint != "?":
+            kamisan_num = num_hint
         
         image_urls = []
         if post.typename == "GraphSidecar":

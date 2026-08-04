@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Global action buttons
     const btnCopyAll = document.getElementById("btn-copy-all");
     const btnExportCsv = document.getElementById("btn-export-csv");
-    const btnExportJson = document.getElementById("btn-export-json");
+    const btnExportJanganDiam = document.getElementById("btn-export-jangandiam");
     const btnExportTxt = document.getElementById("btn-export-txt");
 
     let currentResults = [];
