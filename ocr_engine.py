@@ -15,11 +15,19 @@ print("[OCR] EasyOCR siap.")
 
 
 def _download_image(url: str) -> Image.Image | None:
-    """Download gambar dari URL ke objek PIL Image (tanpa simpan ke disk)."""
+    """Download gambar dari URL ke objek PIL Image & downsample max 800px width untuk efisiensi EasyOCR."""
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
-        return Image.open(BytesIO(resp.content)).convert("RGB")
+        img = Image.open(BytesIO(resp.content)).convert("RGB")
+        
+        # Fast Downsampling: jika lebar > 800px, resize untuk memangkas waktu OCR
+        if img.width > 800:
+            ratio = 800.0 / img.width
+            new_height = int(img.height * ratio)
+            img = img.resize((800, new_height), Image.Resampling.LANCZOS)
+            
+        return img
     except Exception as e:
         print(f"  [OCR] Gagal download gambar {url}: {e}")
         return None

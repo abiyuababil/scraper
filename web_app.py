@@ -37,12 +37,13 @@ class FetchAccountRequest(BaseModel):
 
 from fastapi.responses import FileResponse, StreamingResponse
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 @app.post("/api/process-stream")
 def process_posts_stream(payload: ProcessRequest):
     """
-    Realtime SSE Streaming Endpoint:
-    Memproses URL post satu per satu dan mengirimkan progress & hasil secara live.
-    Mendukung opsi skip_ocr untuk ekstraksi kilat metadata tanpa EasyOCR.
+    Realtime SSE Streaming Endpoint (Parallel Multi-threaded):
+    Memproses URL post secara paralel (5 worker) dan langsung mengirimkan progress & hasil secara live begitu selesai.
     """
     if not payload.urls:
         raise HTTPException(status_code=400, detail="List URL tidak boleh kosong")
@@ -51,73 +52,83 @@ def process_posts_stream(payload: ProcessRequest):
     total_count = len(clean_urls)
     skip_ocr = payload.skip_ocr
 
+    def process_single_url(item_tuple):
+        idx, url = item_tuple
+        print(f"[WebAPI Stream] Worker memproses ({idx}/{total_count}): {url}")
+        
+        post_data = fetch_post_details(url)
+        if not post_data["success"]:
+            return idx, {
+                "shortcode": post_data.get("shortcode", ""),
+                "post_url": post_data.get("post_url", url),
+                "kamisan_number": "?",
+                "selebaran": None,
+                "foto": [],
+                "error": post_data.get("error"),
+                "caption": ""
+            }
+        
+        image_urls = post_data.get("image_urls", [])
+
+        if skip_ocr:
+            selebaran_url = image_urls[-1] if image_urls else None
+            foto_urls = image_urls[:-1] if len(image_urls) > 1 else []
+            classified = {
+                "selebaran": selebaran_url,
+                "foto": foto_urls,
+                "ocr_texts": {}
+            }
+            selebaran_ocr_text = ""
+        else:
+            if image_urls:
+                classified = classify_images(image_urls)
+            else:
+                classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
+
+            selebaran_url = classified.get("selebaran")
+            selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
+
+        result_item = {
+            "kamisan_number": post_data.get("kamisan_number", "?"),
+            "post_url": post_data.get("post_url", url),
+            "date_utc": post_data.get("date_utc", ""),
+            "caption": post_data.get("caption", ""),
+            "selebaran": selebaran_url,
+            "selebaran_ocr_text": selebaran_ocr_text,
+            "foto": classified.get("foto", []),
+            "ocr_texts": classified.get("ocr_texts", {}),
+            "error": None
+        }
+        return idx, result_item
+
     def event_generator():
         yield f"data: {json.dumps({'type': 'init', 'total': total_count})}\n\n"
 
-        for idx, url in enumerate(clean_urls, 1):
-            print(f"\n[WebAPI Stream] ({idx}/{total_count}) Memproses (skip_ocr={skip_ocr}): {url}")
-            
-            # Fetch detail post
-            post_data = fetch_post_details(url)
-            
-            if not post_data["success"]:
-                result_item = {
-                    "shortcode": post_data.get("shortcode", ""),
-                    "post_url": post_data.get("post_url", url),
-                    "kamisan_number": "?",
-                    "selebaran": None,
-                    "foto": [],
-                    "error": post_data.get("error"),
-                    "caption": ""
-                }
-            else:
-                image_urls = post_data.get("image_urls", [])
+        completed_count = 0
+        # Gunakan 5 worker paralel jika item lebih dari 1
+        workers = min(5, total_count) if total_count > 1 else 1
 
-                if skip_ocr:
-                    # Gambar SLIDE TERAKHIR dianggap sebagai Selebaran Naskah Surat Terbuka
-                    # Gambar slide-slide awal (0 hingga sebelum terakhir) dianggap sebagai Foto Dokumentasi Aksi Lapangan
-                    selebaran_url = image_urls[-1] if image_urls else None
-                    foto_urls = image_urls[:-1] if len(image_urls) > 1 else []
-                    classified = {
-                        "selebaran": selebaran_url,
-                        "foto": foto_urls,
-                        "ocr_texts": {}
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_to_url = {executor.submit(process_single_url, (i, url)): (i, url) for i, url in enumerate(clean_urls, 1)}
+
+            for future in as_completed(future_to_url):
+                completed_count += 1
+                try:
+                    idx, result_item = future.result()
+                    percent = int((completed_count / total_count) * 100)
+                    act_label = f"Kamisan ke-{result_item.get('kamisan_number')}" if result_item.get('kamisan_number') != '?' else f"Post #{idx}"
+
+                    progress_data = {
+                        "type": "progress",
+                        "current": completed_count,
+                        "total": total_count,
+                        "percent": percent,
+                        "result": result_item,
+                        "message": f"Selesai memproses {act_label} ({completed_count} dari {total_count})"
                     }
-                    selebaran_ocr_text = ""
-                else:
-                    if image_urls:
-                        classified = classify_images(image_urls)
-                    else:
-                        classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
-
-                    selebaran_url = classified.get("selebaran")
-                    selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
-
-                result_item = {
-                    "kamisan_number": post_data.get("kamisan_number", "?"),
-                    "post_url": post_data.get("post_url", url),
-                    "date_utc": post_data.get("date_utc", ""),
-                    "caption": post_data.get("caption", ""),
-                    "selebaran": selebaran_url,
-                    "selebaran_ocr_text": selebaran_ocr_text,
-                    "foto": classified.get("foto", []),
-                    "ocr_texts": classified.get("ocr_texts", {}),
-                    "error": None
-                }
-
-            percent = int((idx / total_count) * 100)
-            act_label = f"Kamisan ke-{result_item.get('kamisan_number')}" if result_item.get('kamisan_number') != '?' else f"Post #{idx}"
-
-            progress_data = {
-                "type": "progress",
-                "current": idx,
-                "total": total_count,
-                "percent": percent,
-                "result": result_item,
-                "message": f"Selesai memproses {act_label} ({idx} dari {total_count})"
-            }
-
-            yield f"data: {json.dumps(progress_data)}\n\n"
+                    yield f"data: {json.dumps(progress_data)}\n\n"
+                except Exception as p_err:
+                    print(f"[WebAPI Stream] Exception pada worker: {p_err}")
 
         yield f"data: {json.dumps({'type': 'complete', 'total': total_count})}\n\n"
 
