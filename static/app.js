@@ -18,11 +18,12 @@ function showToast(message, type = "success") {
     }, 3500);
 }
 
-function setLoadingState(isLoading, statusText = "", detailText = "", fillPercent = 100) {
+function setLoadingState(isLoading, statusText = "", detailText = "", fillPercent = 0, currentCount = 0, totalCount = 0) {
     const progressModal = document.getElementById("progress-modal");
     const modalStatusTitle = document.getElementById("modal-status-title");
     const modalStatusDetail = document.getElementById("modal-status-detail");
     const modalProgressFill = document.getElementById("modal-progress-fill");
+    const modalProgressCounter = document.getElementById("modal-progress-counter");
     const btnSubmit = document.getElementById("btn-submit");
     const btnFetchAccount = document.getElementById("btn-fetch-account");
     const btnSample = document.getElementById("btn-sample");
@@ -35,6 +36,13 @@ function setLoadingState(isLoading, statusText = "", detailText = "", fillPercen
         if (modalStatusTitle && statusText) modalStatusTitle.innerText = statusText;
         if (modalStatusDetail && detailText) modalStatusDetail.innerText = detailText;
         if (modalProgressFill) modalProgressFill.style.width = `${fillPercent}%`;
+        if (modalProgressCounter) {
+            if (totalCount > 0) {
+                modalProgressCounter.innerText = `${currentCount} / ${totalCount} (${fillPercent}%)`;
+            } else {
+                modalProgressCounter.innerText = `${fillPercent}%`;
+            }
+        }
         
         if (progressModal) progressModal.classList.remove("hidden");
     } else {
@@ -102,7 +110,7 @@ function parseInputUrls(text) {
     return text.trim().split("\n").map(u => u.trim()).filter(u => u.length > 0);
 }
 
-// --- Global Main Submit Process Function ---
+// --- Global Main Submit Process Function (Realtime SSE Streaming) ---
 async function handleProcessSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     
@@ -115,11 +123,14 @@ async function handleProcessSubmit(e) {
         return;
     }
 
-    // Show loading modal progress
-    setLoadingState(true, `Memproses ${rawUrls.length} post Instagram...`, "Mengambil data post & mengunduh gambar...");
+    currentResults = [];
+    renderResults(currentResults); // Reset UI & sembunyikan empty state
+
+    // Show initial loading modal progress
+    setLoadingState(true, `Menghubungi server...`, `Mempersiapkan pemrosesan ${rawUrls.length} post...`, 0, 0, rawUrls.length);
 
     try {
-        const response = await fetch("/api/process", {
+        const response = await fetch("/api/process-stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ urls: rawUrls })
@@ -130,16 +141,60 @@ async function handleProcessSubmit(e) {
             throw new Error(errData.detail || "Gagal memproses request");
         }
 
-        const data = await response.json();
-        currentResults = data.results || [];
-        
-        renderResults(currentResults);
-        showToast(`Berhasil memproses ${currentResults.length} post!`, "success");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() || ""; // simpan sisa baris belum utuh
+
+            for (const line of lines) {
+                const cleanLine = line.trim();
+                if (!cleanLine.startsWith("data: ")) continue;
+
+                const jsonStr = cleanLine.replace(/^data:\s*/, "");
+                try {
+                    const event = JSON.parse(jsonStr);
+
+                    if (event.type === "init") {
+                        setLoadingState(true, `Memproses ${event.total} post Instagram...`, "Mulai mengunduh media & OCR...", 0, 0, event.total);
+                    } else if (event.type === "progress") {
+                        currentResults.push(event.result);
+                        
+                        // Update progress bar & counter live
+                        setLoadingState(
+                            true,
+                            `Memproses post ${event.current} dari ${event.total}...`,
+                            event.message || `Sedang menjalankan EasyOCR...`,
+                            event.percent,
+                            event.current,
+                            event.total
+                        );
+
+                        // Live Card Rendering ke UI secara instan!
+                        renderResults(currentResults);
+                    } else if (event.type === "complete") {
+                        setLoadingState(true, `Pemrosesan Selesai!`, `Seluruh ${event.total} post berhasil diproses.`, 100, event.total, event.total);
+                    }
+                } catch (pErr) {
+                    console.error("JSON parse stream error:", pErr);
+                }
+            }
+        }
+
+        showToast(`✅ Berhasil memproses ${currentResults.length} post Instagram secara live!`, "success");
     } catch (err) {
         console.error(err);
         showToast(`Error: ${err.message}`, "error");
     } finally {
-        setLoadingState(false);
+        setTimeout(() => {
+            setLoadingState(false);
+        }, 600);
     }
 }
 

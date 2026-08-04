@@ -611,6 +611,19 @@ body {
     to { transform: rotate(360deg); }
 }
 
+.modal-counter-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #1e1e24;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
 .modal-body h3 {
     font-size: 1.05rem;
     font-weight: 600;

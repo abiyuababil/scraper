@@ -34,7 +34,78 @@ class FetchAccountRequest(BaseModel):
     limit: int = 50
 
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+
+@app.post("/api/process-stream")
+def process_posts_stream(payload: ProcessRequest):
+    """
+    Realtime SSE Streaming Endpoint:
+    Memproses URL post satu per satu dan mengirimkan progress & hasil secara live.
+    """
+    if not payload.urls:
+        raise HTTPException(status_code=400, detail="List URL tidak boleh kosong")
+
+    clean_urls = [u.strip() for u in payload.urls if u.strip()]
+    total_count = len(clean_urls)
+
+    def event_generator():
+        yield f"data: {json.dumps({'type': 'init', 'total': total_count})}\n\n"
+
+        for idx, url in enumerate(clean_urls, 1):
+            print(f"\n[WebAPI Stream] ({idx}/{total_count}) Memproses: {url}")
+            
+            # Fetch detail post
+            post_data = fetch_post_details(url)
+            
+            if not post_data["success"]:
+                result_item = {
+                    "shortcode": post_data.get("shortcode", ""),
+                    "post_url": post_data.get("post_url", url),
+                    "kamisan_number": "?",
+                    "selebaran": None,
+                    "foto": [],
+                    "error": post_data.get("error"),
+                    "caption": ""
+                }
+            else:
+                image_urls = post_data.get("image_urls", [])
+                if image_urls:
+                    classified = classify_images(image_urls)
+                else:
+                    classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
+
+                selebaran_url = classified.get("selebaran")
+                selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
+
+                result_item = {
+                    "kamisan_number": post_data.get("kamisan_number", "?"),
+                    "post_url": post_data.get("post_url", url),
+                    "date_utc": post_data.get("date_utc", ""),
+                    "caption": post_data.get("caption", ""),
+                    "selebaran": selebaran_url,
+                    "selebaran_ocr_text": selebaran_ocr_text,
+                    "foto": classified.get("foto", []),
+                    "ocr_texts": classified.get("ocr_texts", {}),
+                    "error": None
+                }
+
+            percent = int((idx / total_count) * 100)
+            act_label = f"Kamisan ke-{result_item.get('kamisan_number')}" if result_item.get('kamisan_number') != '?' else f"Post #{idx}"
+
+            progress_data = {
+                "type": "progress",
+                "current": idx,
+                "total": total_count,
+                "percent": percent,
+                "result": result_item,
+                "message": f"Selesai memproses {act_label} ({idx} dari {total_count})"
+            }
+
+            yield f"data: {json.dumps(progress_data)}\n\n"
+
+        yield f"data: {json.dumps({'type': 'complete', 'total': total_count})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/")
 def read_root(request: Request):
