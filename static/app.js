@@ -63,9 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
 https://www.instagram.com/p/C-K67890/`;
     });
 
-    // --- Form Submit Handler ---
-    processForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    // --- Submit Button Handler ---
+    btnSubmit.addEventListener("click", async (e) => {
+        if (e) e.preventDefault();
         
         const rawUrls = urlInput.value.trim().split("\n").map(u => u.trim()).filter(u => u.length > 0);
         if (rawUrls.length === 0) {
