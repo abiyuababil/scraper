@@ -192,16 +192,25 @@
         }
 
         .btn-expand-text {
-            background: none;
-            border: none;
-            color: #60a5fa;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #18191e;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
             font-size: 0.76rem;
             cursor: pointer;
-            padding: 0;
-            margin-top: 0.35rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            transition: all 0.15s;
         }
 
-        .btn-expand-text:hover { text-decoration: underline; }
+        .btn-expand-text:hover {
+            color: var(--text-primary);
+            border-color: #4b5563;
+            background: #202228;
+        }
 
         /* Modal Text Reader */
         .modal-overlay {
@@ -388,7 +397,7 @@
                 return;
             }
 
-            data.forEach(item => {
+            data.forEach((item, index) => {
                 const tr = document.createElement("tr");
                 const actNum = item.actNum || item.id || "?";
                 const dateStr = item.date || "-";
@@ -440,18 +449,28 @@
                     <td>${fotoCellHtml}</td>
                     <td>
                         <div class="text-preview">${escapeHtml(cleanText || "Tidak ada teks")}</div>
-                        ${cleanText ? `<button class="btn-expand-text" onclick="openTextModal('${actNum}', ${JSON.stringify(cleanText).replace(/'/g, "\\'")})">Baca Selengkapnya...</button>` : ''}
+                        ${cleanText ? `<button class="btn-expand-text" data-index="${index}"><i class="fa-solid fa-book-open"></i> Baca Selengkapnya...</button>` : ''}
                     </td>
                 `;
 
                 tbody.appendChild(tr);
             });
-        }
 
-        function openTextModal(actNum, text) {
-            document.getElementById("modal-title").innerText = `Teks Surat Terbuka Aksi Kamisan #${actNum}`;
-            document.getElementById("modal-text-content").innerText = text;
-            document.getElementById("text-modal").classList.remove("hidden");
+            // Bind click event listener untuk modal reader
+            document.querySelectorAll(".btn-expand-text").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const idx = e.currentTarget.getAttribute("data-index");
+                    const item = data[idx];
+                    if (!item) return;
+
+                    const actNum = item.actNum || item.id || "?";
+                    const cleanText = (item.textBody || "").replace(/<p>/g, "").replace(/<\/p>/g, "\n\n").trim();
+                    
+                    document.getElementById("modal-title").innerText = `Teks Surat Terbuka Aksi Kamisan #${actNum}`;
+                    document.getElementById("modal-text-content").innerText = cleanText;
+                    document.getElementById("text-modal").classList.remove("hidden");
+                });
+            });
         }
 
         function escapeHtml(str) {
