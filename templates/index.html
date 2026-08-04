@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Kamisan Processor & OCR Tool</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i class="fa-solid fa-camera-retro logo-icon"></i>
+                <div>
+                    <h1>Kamisan OCR & Scraper Tool</h1>
+                    <p class="subtitle">Ekstrak Gambar, Selebaran, & Foto Aksi Kamisan dari URL Post Instagram</p>
+                </div>
+            </div>
+            <div class="badge-status">
+                <span class="pulse-dot"></span> EasyOCR Engine Active
+            </div>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <main class="main-layout">
+            <!-- Left Panel: Input Section -->
+            <section class="panel input-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-link"></i> Input Link Instagram</h2>
+                    <span class="help-text">Paste 1 atau banyak link post Instagram (satu link per baris)</span>
+                </div>
+                
+                <form id="process-form">
+                    <div class="textarea-wrapper">
+                        <textarea 
+                            id="url-input" 
+                            name="urls" 
+                            rows="7" 
+                            placeholder="Contoh:&#10;https://www.instagram.com/p/C123456/&#10;https://www.instagram.com/p/C789012/"
+                            required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="btn-sample" class="btn btn-secondary">
+                            <i class="fa-solid fa-lightbulb"></i> Isi Contoh Link
+                        </button>
+                        <button type="submit" id="btn-submit" class="btn btn-primary">
+                            <i class="fa-solid fa-bolt"></i> Proses & Jalankan OCR
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Processing Progress Indicator -->
+                <div id="progress-container" class="progress-card hidden">
+                    <div class="spinner-wrapper">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="progress-info">
+                        <h4 id="progress-status">Sedang memproses post Instagram...</h4>
+                        <p id="progress-detail">Mengambil gambar & menganalisis teks via EasyOCR...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results & Actions -->
+            <section class="panel results-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-file-invoice"></i> Hasil Data Terformat</h2>
+                    <div class="action-buttons hidden" id="global-actions">
+                        <button id="btn-copy-all" class="btn btn-sm btn-success">
+                            <i class="fa-solid fa-copy"></i> Salin Semua Teks
+                        </button>
+                        <button id="btn-export-csv" class="btn btn-sm btn-outline">
+                            <i class="fa-solid fa-file-csv"></i> CSV
+                        </button>
+                        <button id="btn-export-json" class="btn btn-sm btn-outline">
+                            <i class="fa-solid fa-code"></i> JSON
+                        </button>
+                        <button id="btn-export-txt" class="btn btn-sm btn-outline">
+                            <i class="fa-solid fa-file-lines"></i> TXT
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state">
+                    <i class="fa-solid fa-folder-open empty-icon"></i>
+                    <h3>Belum Ada Data Diproses</h3>
+                    <p>Masukkan link post Instagram di sebelah kiri lalu klik <strong>Proses & Jalankan OCR</strong> untuk melihat hasilnya di sini.</p>
+                </div>
+
+                <!-- Cards Container -->
+                <div id="results-container" class="results-container"></div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Built with Python, EasyOCR & FastAPI • Kamisan Post OCR Assistant</p>
+        </footer>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="fa-solid fa-check-circle toast-icon"></i>
+        <span id="toast-message">Teks berhasil disalin!</span>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
