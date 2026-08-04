@@ -383,6 +383,31 @@ function renderResults(results) {
     });
 }
 
+// --- Dynamic Download File Name Generator ---
+function getDynamicFileName(results, extension) {
+    if (!results || results.length === 0) {
+        return `kamisan_data.${extension}`;
+    }
+
+    const numbers = results
+        .map(r => parseInt(r.kamisan_number))
+        .filter(n => !isNaN(n))
+        .sort((a, b) => a - b);
+
+    if (numbers.length === 0) {
+        return `kamisan_data.${extension}`;
+    }
+
+    const minNum = numbers[0];
+    const maxNum = numbers[numbers.length - 1];
+
+    if (minNum === maxNum) {
+        return `${minNum}.${extension}`;
+    } else {
+        return `${minNum}-${maxNum}.${extension}`;
+    }
+}
+
 // --- DOMContentLoaded Init & Event Binding ---
 document.addEventListener("DOMContentLoaded", () => {
     const btnSubmit = document.getElementById("btn-submit");
@@ -453,7 +478,8 @@ document.addEventListener("DOMContentLoaded", () => {
         btnExportTxt.addEventListener("click", () => {
             if (!currentResults.length) return;
             const allText = currentResults.map(item => formatSingleText(item)).join("\n\n============================================================\n\n");
-            downloadFile(allText, "kamisan_formatted.txt", "text/plain");
+            const fileName = getDynamicFileName(currentResults, "txt");
+            downloadFile(allText, fileName, "text/plain");
         });
     }
 
@@ -461,7 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btnExportJanganDiam.addEventListener("click", () => {
             if (!currentResults.length) return;
 
-            const janganDiamSchema = currentResults.map(item => {
+            const jsonSchema = currentResults.map(item => {
                 const actNum = item.kamisan_number || "";
                 const dateStr = item.date_utc ? item.date_utc.split("T")[0] : "";
                 const ocrText = item.selebaran_ocr_text || "";
@@ -506,16 +532,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     "summary": item.caption ? item.caption.substring(0, 180).replace(/["\r\n]/g, " ") : "",
                     "insights": [],
                     "casesReferred": [],
-                    "source": "Selebaran Aksi Kamisan / JSKK",
+                    "source": "Selebaran Aksi Kamisan",
                     "sourceUrl": item.post_url,
                     "textBody": paragraphs || "<p></p>",
                     "attachments": attachments
                 };
             });
 
-            const jsonStr = JSON.stringify(janganDiamSchema, null, 2);
-            downloadFile(jsonStr, "archive_jangan_diam.json", "application/json");
-            showToast("File JSON schema 'Jangan-Diam' berhasil diunduh!");
+            const jsonStr = JSON.stringify(jsonSchema, null, 2);
+            const fileName = getDynamicFileName(currentResults, "json");
+            downloadFile(jsonStr, fileName, "application/json");
+            showToast(`File JSON (${fileName}) berhasil diunduh!`);
         });
     }
 
@@ -544,8 +571,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const csvContent = "\uFEFF" + rows.join("\n");
-            downloadFile(csvContent, "kamisan_spreadsheet.csv", "text/csv;charset=utf-8;");
-            showToast("File CSV Spreadsheet berhasil diunduh!");
+            const fileName = getDynamicFileName(currentResults, "csv");
+            downloadFile(csvContent, fileName, "text/csv;charset=utf-8;");
+            showToast(`File CSV Spreadsheet (${fileName}) berhasil diunduh!`);
         });
     }
 });
