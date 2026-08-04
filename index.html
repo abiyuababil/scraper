@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Katalog Arsip Aksi Kamisan</title>
     <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <style>
         :root {
             --bg-main: #0c0d0e;
@@ -22,8 +25,12 @@
             --radius-md: 10px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: var(--bg-main);
             color: var(--text-primary);
@@ -215,7 +222,10 @@
         /* Modal Text Reader */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: rgba(10, 11, 13, 0.94);
             backdrop-filter: blur(10px);
             z-index: 99999;
@@ -259,7 +269,9 @@
             border-radius: var(--radius-sm);
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
 
         .btn-close {
             background: var(--btn-sec-bg);
@@ -271,6 +283,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -281,7 +294,8 @@
         <section class="search-section">
             <div class="search-box">
                 <i class="fa-solid fa-search"></i>
-                <input type="text" id="search-input" placeholder="Cari berdasarkan nomor aksi (misal: 796), tanggal, kata di surat terbuka, dll..." />
+                <input type="text" id="search-input"
+                    placeholder="Cari berdasarkan nomor aksi (misal: 796), tanggal, kata di surat terbuka, dll..." />
             </div>
         </section>
 
@@ -292,7 +306,7 @@
                         <tr>
                             <th style="width: 110px;">No. Aksi</th>
                             <th style="width: 120px;">Tanggal</th>
-                            <th style="width: 180px;">Link Post IG</th>
+                            <th style="width: 180px;">Sumber</th>
                             <th style="width: 220px;">File Selebaran</th>
                             <th style="width: 220px;">Foto Dokumentasi</th>
                             <th>Teks Surat Terbuka / OCR</th>
@@ -360,9 +374,9 @@
                     const bodyText = (item.textBody || "").replace(/<[^>]+>/g, "").toLowerCase();
 
                     return actNum.toLowerCase().includes(q) ||
-                           date.toLowerCase().includes(q) ||
-                           sourceUrl.toLowerCase().includes(q) ||
-                           bodyText.includes(q);
+                        date.toLowerCase().includes(q) ||
+                        sourceUrl.toLowerCase().includes(q) ||
+                        bodyText.includes(q);
                 });
 
                 renderTable(filtered);
@@ -419,7 +433,7 @@
                 if (selebaranUrl) {
                     selebaranCellHtml = `
                         <a href="${selebaranUrl}" target="_blank" class="link-pill">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Selebaran (New Tab)
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Selebaran
                         </a>
                     `;
                 }
@@ -442,7 +456,7 @@
                     <td>${dateStr}</td>
                     <td>
                         <a href="${postUrl}" target="_blank" class="link-pill">
-                            <i class="fa-solid fa-instagram"></i> Sumber Post IG
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Sumber
                         </a>
                     </td>
                     <td>${selebaranCellHtml}</td>
@@ -465,7 +479,7 @@
 
                     const actNum = item.actNum || item.id || "?";
                     const cleanText = (item.textBody || "").replace(/<p>/g, "").replace(/<\/p>/g, "\n\n").trim();
-                    
+
                     document.getElementById("modal-title").innerText = `Teks Surat Terbuka Aksi Kamisan #${actNum}`;
                     document.getElementById("modal-text-content").innerText = cleanText;
                     document.getElementById("text-modal").classList.remove("hidden");
@@ -479,4 +493,5 @@
         }
     </script>
 </body>
+
 </html>
