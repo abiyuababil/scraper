@@ -118,6 +118,10 @@ https://www.instagram.com/p/C-K67890/`;
             const card = document.createElement("div");
             card.className = "result-card";
 
+        results.forEach((item, index) => {
+            const card = document.createElement("div");
+            card.className = "result-card";
+
             const formattedText = formatSingleText(item);
             
             // Build Image Previews HTML
@@ -152,31 +156,6 @@ https://www.instagram.com/p/C-K67890/`;
                 mediaPreviewHtml += `</div></div>`;
             }
 
-            // Build OCR Text Block for Selebaran HTML
-            let ocrTextBlockHtml = "";
-            if (item.selebaran_ocr_text) {
-                ocrTextBlockHtml = `
-                    <div class="ocr-text-section">
-                        <div class="ocr-header">
-                            <h5><i class="fa-solid fa-align-left"></i> Hasil OCR Teks Selebaran</h5>
-                            <button class="btn btn-sm btn-outline btn-copy-ocr" data-index="${index}">
-                                <i class="fa-solid fa-copy"></i> Salin Teks OCR Selebaran
-                            </button>
-                        </div>
-                        <div class="ocr-content-box">${escapeHtml(item.selebaran_ocr_text)}</div>
-                    </div>
-                `;
-            } else if (item.selebaran) {
-                ocrTextBlockHtml = `
-                    <div class="ocr-text-section">
-                        <div class="ocr-header">
-                            <h5><i class="fa-solid fa-align-left"></i> Hasil OCR Teks Selebaran</h5>
-                        </div>
-                        <div class="ocr-content-box text-muted">Tidak ada teks signifikan yang terdeteksi di selebaran ini.</div>
-                    </div>
-                `;
-            }
-
             // Build Quick Interactive Links HTML (Pill buttons)
             let quickLinksHtml = `<div class="quick-links-section">
                 <h5 class="gallery-title"><i class="fa-solid fa-link"></i> Link Pintas & Salin URL</h5>
@@ -209,6 +188,55 @@ https://www.instagram.com/p/C-K67890/`;
 
             quickLinksHtml += `</div></div>`;
 
+            // Build Collapsible Side-by-Side OCR Section
+            let sideBySideOcrHtml = "";
+            if (item.selebaran) {
+                sideBySideOcrHtml = `
+                    <div class="collapsible-wrapper">
+                        <div class="collapsible-header" data-target="ocr-collapse-${index}">
+                            <div class="collapsible-title">
+                                <i class="fa-solid fa-columns"></i> Side-by-Side Selebaran & Hasil OCR Teks
+                            </div>
+                            <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                        </div>
+                        <div id="ocr-collapse-${index}" class="collapsible-content">
+                            <div class="side-by-side-container">
+                                <div class="side-left-image">
+                                    <h5 class="gallery-title"><i class="fa-solid fa-file-image"></i> Gambar Selebaran</h5>
+                                    <a href="${item.selebaran}" target="_blank">
+                                        <img src="${item.selebaran}" alt="Gambar Selebaran" loading="lazy" referrerpolicy="no-referrer" />
+                                    </a>
+                                </div>
+                                <div class="side-right-ocr">
+                                    <div class="ocr-header">
+                                        <h5 class="gallery-title"><i class="fa-solid fa-edit"></i> Edit / Verifikasi Teks OCR</h5>
+                                        <button class="btn btn-sm btn-outline btn-copy-ocr" data-index="${index}">
+                                            <i class="fa-solid fa-copy"></i> Salin Teks OCR
+                                        </button>
+                                    </div>
+                                    <textarea class="ocr-textarea ocr-edit-input" data-index="${index}" placeholder="Teks OCR akan muncul di sini...">${escapeHtml(item.selebaran_ocr_text || "")}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Build Collapsible Format Text Section
+            let collapsibleFormattedHtml = `
+                <div class="collapsible-wrapper">
+                    <div class="collapsible-header" data-target="fmt-collapse-${index}">
+                        <div class="collapsible-title">
+                            <i class="fa-solid fa-code"></i> Format Teks Terkompilasi (Klik untuk Buka/Tutup)
+                        </div>
+                        <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                    </div>
+                    <div id="fmt-collapse-${index}" class="collapsible-content">
+                        <div class="result-text-block">${escapeHtml(formattedText)}</div>
+                    </div>
+                </div>
+            `;
+
             card.innerHTML = `
                 <div class="card-top">
                     <span class="kamisan-title">Kamisan ke-${item.kamisan_number}</span>
@@ -219,10 +247,9 @@ https://www.instagram.com/p/C-K67890/`;
 
                 ${quickLinksHtml}
 
-                <div class="section-title"><i class="fa-solid fa-code"></i> Format Teks Terkompilasi</div>
-                <div class="result-text-block">${escapeHtml(formattedText)}</div>
-                
-                ${ocrTextBlockHtml}
+                ${sideBySideOcrHtml}
+
+                ${collapsibleFormattedHtml}
 
                 <div class="card-actions">
                     <button class="btn btn-sm btn-secondary btn-copy-card" data-index="${index}">
@@ -232,6 +259,28 @@ https://www.instagram.com/p/C-K67890/`;
             `;
 
             resultsContainer.appendChild(card);
+        });
+
+        // Event Listeners for Collapsible Headers
+        document.querySelectorAll(".collapsible-header").forEach(header => {
+            header.addEventListener("click", () => {
+                header.classList.toggle("active");
+                const targetId = header.getAttribute("data-target");
+                const content = document.getElementById(targetId);
+                if (content) {
+                    content.classList.toggle("open");
+                }
+            });
+        });
+
+        // Event Listener for Live Editable OCR Textarea
+        document.querySelectorAll(".ocr-edit-input").forEach(textarea => {
+            textarea.addEventListener("input", (e) => {
+                const idx = e.target.getAttribute("data-index");
+                if (results[idx]) {
+                    results[idx].selebaran_ocr_text = e.target.value;
+                }
+            });
         });
 
         // Event listener for single copy buttons
@@ -399,17 +448,30 @@ https://www.instagram.com/p/C-K67890/`;
     });
 
     // --- Helper Functions ---
-    function setLoadingState(isLoading, statusText = "", detailText = "") {
+    const progressModal = document.getElementById("progress-modal");
+    const modalStatusTitle = document.getElementById("modal-status-title");
+    const modalStatusDetail = document.getElementById("modal-status-detail");
+    const modalProgressFill = document.getElementById("modal-progress-fill");
+
+    function setLoadingState(isLoading, statusText = "", detailText = "", fillPercent = 100) {
         if (isLoading) {
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
-            progressContainer.classList.remove("hidden");
-            if (statusText) progressStatus.innerText = statusText;
-            if (detailText) progressDetail.innerText = detailText;
+            btnSubmit.innerText = "Memproses...";
+            if (btnFetchAccount) btnFetchAccount.disabled = true;
+            if (btnSample) btnSample.disabled = true;
+
+            if (statusText) modalStatusTitle.innerText = statusText;
+            if (detailText) modalStatusDetail.innerText = detailText;
+            if (modalProgressFill) modalProgressFill.style.width = `${fillPercent}%`;
+            
+            progressModal.classList.remove("hidden");
         } else {
             btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-bolt"></i> Proses & Jalankan OCR`;
-            progressContainer.classList.add("hidden");
+            btnSubmit.innerText = "Proses & Jalankan OCR";
+            if (btnFetchAccount) btnFetchAccount.disabled = false;
+            if (btnSample) btnSample.disabled = false;
+
+            progressModal.classList.add("hidden");
         }
     }
 

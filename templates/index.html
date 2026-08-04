@@ -54,27 +54,16 @@
 
                     <div class="form-actions">
                         <button type="button" id="btn-fetch-account" class="btn btn-outline" title="Ambil semua URL post dari akun @sumarsihmaria secara otomatis">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Auto-Fetch Link Akun
+                            Auto-Fetch Link Akun
                         </button>
                         <button type="button" id="btn-sample" class="btn btn-secondary">
-                            <i class="fa-solid fa-lightbulb"></i> Isi Contoh Link
+                            Isi Contoh Link
                         </button>
                         <button type="submit" id="btn-submit" class="btn btn-primary">
-                            <i class="fa-solid fa-bolt"></i> Proses & Jalankan OCR
+                            Proses & Jalankan OCR
                         </button>
                     </div>
                 </form>
-
-                <!-- Processing Progress Indicator -->
-                <div id="progress-container" class="progress-card hidden">
-                    <div class="spinner-wrapper">
-                        <div class="spinner"></div>
-                    </div>
-                    <div class="progress-info">
-                        <h4 id="progress-status">Sedang memproses post Instagram...</h4>
-                        <p id="progress-detail">Mengambil gambar & menganalisis teks via EasyOCR...</p>
-                    </div>
-                </div>
             </section>
 
             <!-- Right Panel: Results & Actions -->
@@ -112,6 +101,21 @@
         <footer class="app-footer">
             <p>Built with Python, EasyOCR & FastAPI • Kamisan Post OCR Assistant</p>
         </footer>
+    </div>
+
+    <!-- Unclosable Live Progress Modal Overlay -->
+    <div id="progress-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-spinner"></div>
+            <div class="modal-body">
+                <h3 id="modal-status-title">Memproses Post Instagram...</h3>
+                <p id="modal-status-detail">Mengunduh media & mendeteksi teks via EasyOCR...</p>
+                <div class="modal-progress-bar">
+                    <div id="modal-progress-fill" class="progress-fill"></div>
+                </div>
+                <span class="modal-lock-notice"><i class="fa-solid fa-lock"></i> Mohon tunggu hingga proses selesai (Batal hanya via tutup tab)</span>
+            </div>
+        </div>
     </div>
 
     <!-- Notification Toast -->
