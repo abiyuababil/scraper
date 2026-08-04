@@ -377,6 +377,32 @@ body {
     background: rgba(0, 0, 0, 0.75);
     color: #fff;
     backdrop-filter: blur(4px);
+    z-index: 2;
+}
+
+.btn-set-selebaran {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border-radius: 4px;
+    background: rgba(20, 21, 24, 0.9);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: all 0.15s;
+    z-index: 2;
+    text-align: center;
+}
+
+.btn-set-selebaran:hover {
+    background: #facc15;
+    color: #000;
+    border-color: #facc15;
 }
 
 /* Quick Links Grid */

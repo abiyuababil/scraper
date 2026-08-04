@@ -287,6 +287,9 @@ function renderResults(results) {
                             <a href="${fotoUrl}" target="_blank" title="Klik untuk membuka gambar penuh">
                                 <img src="${fotoUrl}" alt="Foto Aksi ${fIdx + 1}" class="media-img" loading="lazy" referrerpolicy="no-referrer" />
                             </a>
+                            <button class="btn-set-selebaran" data-card-index="${index}" data-foto-idx="${fIdx}" title="Klik untuk menjadikan gambar ini sebagai Selebaran Naskah">
+                                <i class="fa-solid fa-file-signature"></i> Set Selebaran
+                            </button>
                         </div>`;
                 });
             }
@@ -438,6 +441,30 @@ function renderResults(results) {
             const textToCopy = formatSingleText(results[idx]);
             copyToClipboard(textToCopy);
             showToast("Format teks post berhasil disalin!");
+        });
+    });
+
+    // Event listener for Set Selebaran buttons
+    document.querySelectorAll(".btn-set-selebaran").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const cardIdx = parseInt(e.currentTarget.getAttribute("data-card-index"), 10);
+            const fotoIdx = parseInt(e.currentTarget.getAttribute("data-foto-idx"), 10);
+            
+            const item = currentResults[cardIdx];
+            if (!item || !item.foto || !item.foto[fotoIdx]) return;
+
+            const chosenFotoUrl = item.foto[fotoIdx];
+            const oldSelebaranUrl = item.selebaran;
+
+            // Tukar posisi gambar
+            item.selebaran = chosenFotoUrl;
+            item.foto.splice(fotoIdx, 1);
+            if (oldSelebaranUrl) {
+                item.foto.unshift(oldSelebaranUrl); // Masukkan selebaran lama ke awal array foto
+            }
+
+            renderResults(currentResults);
+            showToast("📜 Gambar berhasil diubah menjadi Selebaran Naskah!", "success");
         });
     });
 
