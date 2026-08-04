@@ -30,7 +30,7 @@ class ProcessRequest(BaseModel):
 @app.get("/")
 def read_root(request: Request):
     """Render antarmuka utama Web UI."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
 
 
 @app.post("/api/process")
