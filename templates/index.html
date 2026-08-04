@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css?v=1.0.5">
+    <link rel="stylesheet" href="/static/style.css?v=1.0.6">
 </head>
 <body>
     <div class="background-globes">
@@ -118,12 +118,39 @@
         </div>
     </div>
 
+    <!-- Fullscreen Side-by-Side Workspace Modal -->
+    <div id="fullscreen-editor-modal" class="fullscreen-modal-overlay hidden">
+        <div class="fullscreen-modal-header">
+            <h3 id="fullscreen-modal-title"><i class="fa-solid fa-expand"></i> Fullscreen Workspace Editor — Kamisan</h3>
+            <div class="header-actions">
+                <button id="btn-fullscreen-copy" class="btn btn-sm btn-success">
+                    <i class="fa-solid fa-copy"></i> Salin Teks OCR
+                </button>
+                <button id="btn-fullscreen-close" class="btn btn-sm btn-secondary">
+                    <i class="fa-solid fa-xmark"></i> Simpan & Tutup Fullscreen (Esc)
+                </button>
+            </div>
+        </div>
+        <div class="fullscreen-workspace-grid">
+            <div class="side-left-image">
+                <h5 class="gallery-title"><i class="fa-solid fa-file-image"></i> Gambar Selebaran (1 Layar Penuh)</h5>
+                <a id="fs-image-link" href="#" target="_blank" title="Klik untuk membuka gambar ukuran asli">
+                    <img id="fs-image-preview" src="" alt="Selebaran Fullscreen" />
+                </a>
+            </div>
+            <div class="side-right-ocr">
+                <h5 class="gallery-title"><i class="fa-solid fa-pen-to-square"></i> Editor Teks OCR (Satu Layar Penuh)</h5>
+                <textarea id="fs-ocr-textarea" class="ocr-textarea" placeholder="Teks OCR..."></textarea>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="toast" class="toast hidden">
         <i class="fa-solid fa-check-circle toast-icon"></i>
         <span id="toast-message">Teks berhasil disalin!</span>
     </div>
 
-    <script src="/static/app.js?v=1.0.5"></script>
+    <script src="/static/app.js?v=1.0.6"></script>
 </body>
 </html>

@@ -272,7 +272,12 @@ function renderResults(results) {
                     <div id="ocr-collapse-${index}" class="collapsible-content">
                         <div class="side-by-side-container">
                             <div class="side-left-image">
-                                <h5 class="gallery-title"><i class="fa-solid fa-file-image"></i> Gambar Selebaran</h5>
+                                <div class="ocr-header">
+                                    <h5 class="gallery-title"><i class="fa-solid fa-file-image"></i> Gambar Selebaran</h5>
+                                    <button class="btn btn-sm btn-outline btn-open-fullscreen" data-index="${index}">
+                                        <i class="fa-solid fa-expand"></i> Layar Penuh (Fullscreen Editor)
+                                    </button>
+                                </div>
                                 <a href="${item.selebaran}" target="_blank">
                                     <img src="${item.selebaran}" alt="Gambar Selebaran" loading="lazy" referrerpolicy="no-referrer" />
                                 </a>
@@ -284,7 +289,7 @@ function renderResults(results) {
                                         <i class="fa-solid fa-copy"></i> Salin Teks OCR
                                     </button>
                                 </div>
-                                <textarea class="ocr-textarea ocr-edit-input" data-index="${index}" placeholder="Teks OCR akan muncul di sini...">${escapeHtml(item.selebaran_ocr_text || "")}</textarea>
+                                <textarea class="ocr-textarea ocr-edit-input" data-index="${index}" id="card-ocr-textarea-${index}" placeholder="Teks OCR akan muncul di sini...">${escapeHtml(item.selebaran_ocr_text || "")}</textarea>
                             </div>
                         </div>
                     </div>
@@ -369,6 +374,67 @@ function renderResults(results) {
             const urlToCopy = e.currentTarget.getAttribute("data-url");
             copyToClipboard(urlToCopy);
             showToast("URL gambar berhasil disalin ke clipboard!");
+        });
+    });
+
+    // Event listener for Fullscreen Workspace Editor
+    document.querySelectorAll(".btn-open-fullscreen").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const idx = e.currentTarget.getAttribute("data-index");
+            const item = results[idx];
+            if (!item) return;
+
+            const fsModal = document.getElementById("fullscreen-editor-modal");
+            const fsTitle = document.getElementById("fullscreen-modal-title");
+            const fsImgLink = document.getElementById("fs-image-link");
+            const fsImgPreview = document.getElementById("fs-image-preview");
+            const fsTextarea = document.getElementById("fs-ocr-textarea");
+
+            if (fsModal && fsImgPreview && fsTextarea) {
+                fsTitle.innerHTML = `<i class="fa-solid fa-expand"></i> Fullscreen Workspace Editor — Kamisan ke-${item.kamisan_number}`;
+                fsImgPreview.src = item.selebaran || "";
+                fsImgLink.href = item.selebaran || "#";
+                fsTextarea.value = item.selebaran_ocr_text || "";
+
+                fsModal.classList.remove("hidden");
+
+                // Live Sync dari Fullscreen Textarea ke Results Data & Card Textarea
+                const syncHandler = (evt) => {
+                    const updatedVal = evt.target.value;
+                    item.selebaran_ocr_text = updatedVal;
+                    const cardTextarea = document.getElementById(`card-ocr-textarea-${idx}`);
+                    if (cardTextarea) cardTextarea.value = updatedVal;
+                };
+
+                fsTextarea.oninput = syncHandler;
+
+                // Close Button Listener
+                const btnClose = document.getElementById("btn-fullscreen-close");
+                const btnCopy = document.getElementById("btn-fullscreen-copy");
+
+                if (btnClose) {
+                    btnClose.onclick = () => {
+                        fsModal.classList.add("hidden");
+                        showToast("Perubahan teks disimpan secara otomatis!");
+                    };
+                }
+
+                if (btnCopy) {
+                    btnCopy.onclick = () => {
+                        copyToClipboard(fsTextarea.value);
+                        showToast("Teks OCR berhasil disalin!");
+                    };
+                }
+
+                // Esc Key Listener
+                const escHandler = (evt) => {
+                    if (evt.key === "Escape") {
+                        fsModal.classList.add("hidden");
+                        document.removeEventListener("keydown", escHandler);
+                    }
+                };
+                document.addEventListener("keydown", escHandler);
+            }
         });
     });
 
