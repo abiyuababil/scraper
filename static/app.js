@@ -83,8 +83,8 @@ https://www.instagram.com/p/C-K67890/`;
         return text.trim().split("\n").map(u => u.trim()).filter(u => u.length > 0);
     }
 
-    // --- Submit Button Handler ---
-    btnSubmit.addEventListener("click", async (e) => {
+    // --- Submit Handler Function ---
+    async function handleProcessSubmit(e) {
         if (e) e.preventDefault();
         
         const rawUrls = parseInputUrls(urlInput.value);
@@ -119,7 +119,15 @@ https://www.instagram.com/p/C-K67890/`;
         } finally {
             setLoadingState(false);
         }
-    });
+    }
+
+    // Expose ke window object untuk fallback onclick
+    window.handleProcessSubmit = handleProcessSubmit;
+
+    // --- Submit Button Handler ---
+    if (btnSubmit) {
+        btnSubmit.addEventListener("click", handleProcessSubmit);
+    }
 
     // --- Render Results ---
     function renderResults(results) {
