@@ -27,10 +27,31 @@ class ProcessRequest(BaseModel):
     urls: list[str]
 
 
+class FetchAccountRequest(BaseModel):
+    username: str = "sumarsihmaria"
+    limit: int = 50
+
+
 @app.get("/")
 def read_root(request: Request):
     """Render antarmuka utama Web UI."""
     return templates.TemplateResponse(request=request, name="index.html")
+
+
+@app.post("/api/fetch-account-urls")
+def fetch_urls_from_account(payload: FetchAccountRequest):
+    """Endpoint API untuk memetik list URL post dari username target."""
+    from get_profile_urls import fetch_profile_post_urls
+    username = payload.username.strip().replace("@", "")
+    if not username:
+        raise HTTPException(status_code=400, detail="Username Instagram tidak boleh kosong")
+
+    urls = fetch_profile_post_urls(username, max_count=payload.limit)
+    return {
+        "username": username,
+        "total": len(urls),
+        "urls": urls
+    }
 
 
 @app.post("/api/process")

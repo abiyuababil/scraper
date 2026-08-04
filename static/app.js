@@ -7,12 +7,47 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlInput = document.getElementById("url-input");
     const btnSubmit = document.getElementById("btn-submit");
     const btnSample = document.getElementById("btn-sample");
+    const btnFetchAccount = document.getElementById("btn-fetch-account");
     const progressContainer = document.getElementById("progress-container");
     const progressStatus = document.getElementById("progress-status");
     const progressDetail = document.getElementById("progress-detail");
     const emptyState = document.getElementById("empty-state");
     const resultsContainer = document.getElementById("results-container");
     const globalActions = document.getElementById("global-actions");
+
+    // --- Auto-Fetch Link Akun Target Button ---
+    btnFetchAccount.addEventListener("click", async () => {
+        const username = prompt("Masukkan username Instagram yang ingin diambil seluruh link post-nya:", "sumarsihmaria");
+        if (!username) return;
+
+        setLoadingState(true, `Mengambil daftar link post dari @${username}...`, "Menghubungi Instagram & mengumpulkan URL...");
+
+        try {
+            const resp = await fetch("/api/fetch-account-urls", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: username, limit: 50 })
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.detail || "Gagal mengambil link post");
+            }
+
+            const data = await resp.json();
+            if (data.urls && data.urls.length > 0) {
+                urlInput.value = data.urls.join("\n");
+                showToast(`✅ Berhasil mengambil ${data.urls.length} link post dari @${data.username}!`, "success");
+            } else {
+                showToast(`⚠️ Tidak ada link post ditemukan untuk @${username}`, "warning");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast(`Error: ${err.message}`, "error");
+        } finally {
+            setLoadingState(false);
+        }
+    });
     
     // Global action buttons
     const btnCopyAll = document.getElementById("btn-copy-all");
