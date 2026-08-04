@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog Arsip Aksi Kamisan</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #0c0d0e;
+            --bg-panel: #141518;
+            --bg-input: #101114;
+            --border-color: #262830;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --btn-sec-bg: #202228;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: var(--bg-panel);
+            padding: 1rem 1.25rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0.65rem 0.85rem 0.65rem 2.4rem;
+            color: var(--text-primary);
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: #4b5563;
+        }
+
+        .stats-badge {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Table Styling */
+        .table-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.86rem;
+        }
+
+        th {
+            background: #18191e;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 0.75rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background: #181a20;
+        }
+
+        .act-badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            background: #1e1e24;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Link Pills without direct images */
+        .link-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.6rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-right: 0.35rem;
+            margin-bottom: 0.35rem;
+            transition: all 0.15s;
+        }
+
+        .link-pill:hover {
+            color: var(--text-primary);
+            border-color: #4b5563;
+        }
+
+        .text-preview {
+            max-height: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #d1d5db;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .btn-expand-text {
+            background: none;
+            border: none;
+            color: #60a5fa;
+            font-size: 0.76rem;
+            cursor: pointer;
+            padding: 0;
+            margin-top: 0.35rem;
+        }
+
+        .btn-expand-text:hover { text-decoration: underline; }
+
+        /* Modal Text Reader */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(10, 11, 13, 0.94);
+            backdrop-filter: blur(10px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            max-width: 800px;
+            width: 100%;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            gap: 1rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            color: #e4e4e7;
+            background: #090a0c;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+        }
+
+        .hidden { display: none !important; }
+
+        .btn-close {
+            background: var(--btn-sec-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fa-solid fa-archive"></i> Katalog Arsip Aksi Kamisan</h1>
+            <span class="stats-badge" id="stats-counter">Memuat data...</span>
+        </header>
+
+        <section class="search-section">
+            <div class="search-box">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="search-input" placeholder="Cari berdasarkan nomor aksi (misal: 796), tanggal, kata di surat terbuka, dll..." />
+            </div>
+        </section>
+
+        <div class="table-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;">No. Aksi</th>
+                            <th style="width: 120px;">Tanggal</th>
+                            <th style="width: 180px;">Link Post IG</th>
+                            <th style="width: 220px;">File Selebaran</th>
+                            <th style="width: 220px;">Foto Dokumentasi</th>
+                            <th>Teks Surat Terbuka / OCR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Mengambil arsip dari data archive.json...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Full Text Viewer -->
+    <div id="text-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Teks Surat Terbuka</h3>
+                <button class="btn-close" id="modal-close">Tutup (Esc)</button>
+            </div>
+            <div class="modal-body" id="modal-text-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let allArchiveData = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("archive.json")
+                .then(res => {
+                    if (!res.ok) throw new Error("File archive.json belum ada");
+                    return res.json();
+                })
+                .then(data => {
+                    allArchiveData = data;
+                    renderTable(allArchiveData);
+                })
+                .catch(err => {
+                    console.warn(err);
+                    document.getElementById("table-body").innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #ef4444; padding: 2rem;">
+                                <i class="fa-solid fa-exclamation-triangle"></i> Belum ada data di file <strong>archive.json</strong>. Silakan tambahkan data melalui aplikasi Scraper.
+                            </td>
+                        </tr>
+                    `;
+                    document.getElementById("stats-counter").innerText = "0 Data";
+                });
+
+            document.getElementById("search-input").addEventListener("input", (e) => {
+                const q = e.target.value.toLowerCase().trim();
+                if (!q) {
+                    renderTable(allArchiveData);
+                    return;
+                }
+
+                const filtered = allArchiveData.filter(item => {
+                    const actNum = String(item.actNum || item.id || "");
+                    const date = String(item.date || "");
+                    const sourceUrl = String(item.sourceUrl || "");
+                    const bodyText = (item.textBody || "").replace(/<[^>]+>/g, "").toLowerCase();
+
+                    return actNum.toLowerCase().includes(q) ||
+                           date.toLowerCase().includes(q) ||
+                           sourceUrl.toLowerCase().includes(q) ||
+                           bodyText.includes(q);
+                });
+
+                renderTable(filtered);
+            });
+
+            document.getElementById("modal-close").addEventListener("click", () => {
+                document.getElementById("text-modal").classList.add("hidden");
+            });
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    document.getElementById("text-modal").classList.add("hidden");
+                }
+            });
+        });
+
+        function renderTable(data) {
+            const tbody = document.getElementById("table-body");
+            const stats = document.getElementById("stats-counter");
+            tbody.innerHTML = "";
+
+            stats.innerText = `Menampilkan ${data.length} Data Aksi`;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            Tidak ada data yang cocok dengan kata kunci pencarian.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement("tr");
+                const actNum = item.actNum || item.id || "?";
+                const dateStr = item.date || "-";
+                const postUrl = item.sourceUrl || "#";
+
+                // Extract attachments
+                let selebaranUrl = "";
+                let fotoUrls = [];
+
+                if (item.attachments && Array.isArray(item.attachments)) {
+                    item.attachments.forEach(att => {
+                        if (att.type === "naskah" && att.imageUrl) selebaranUrl = att.imageUrl;
+                        if (att.type === "foto" && att.imageUrl) fotoUrls.push(att.imageUrl);
+                    });
+                }
+
+                // Format Selebaran Link
+                let selebaranCellHtml = "-";
+                if (selebaranUrl) {
+                    selebaranCellHtml = `
+                        <a href="${selebaranUrl}" target="_blank" class="link-pill">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Selebaran (New Tab)
+                        </a>
+                    `;
+                }
+
+                // Format Foto Links
+                let fotoCellHtml = "-";
+                if (fotoUrls.length > 0) {
+                    fotoCellHtml = fotoUrls.map((fUrl, fIdx) => `
+                        <a href="${fUrl}" target="_blank" class="link-pill">
+                            <i class="fa-solid fa-image"></i> Foto #${fIdx + 1}
+                        </a>
+                    `).join("");
+                }
+
+                // Strip HTML tags for clean text view
+                const cleanText = (item.textBody || "").replace(/<p>/g, "").replace(/<\/p>/g, "\n\n").trim();
+
+                tr.innerHTML = `
+                    <td><span class="act-badge">#${actNum}</span></td>
+                    <td>${dateStr}</td>
+                    <td>
+                        <a href="${postUrl}" target="_blank" class="link-pill">
+                            <i class="fa-solid fa-instagram"></i> Sumber Post IG
+                        </a>
+                    </td>
+                    <td>${selebaranCellHtml}</td>
+                    <td>${fotoCellHtml}</td>
+                    <td>
+                        <div class="text-preview">${escapeHtml(cleanText || "Tidak ada teks")}</div>
+                        ${cleanText ? `<button class="btn-expand-text" onclick="openTextModal('${actNum}', ${JSON.stringify(cleanText).replace(/'/g, "\\'")})">Baca Selengkapnya...</button>` : ''}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openTextModal(actNum, text) {
+            document.getElementById("modal-title").innerText = `Teks Surat Terbuka Aksi Kamisan #${actNum}`;
+            document.getElementById("modal-text-content").innerText = text;
+            document.getElementById("text-modal").classList.remove("hidden");
+        }
+
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
