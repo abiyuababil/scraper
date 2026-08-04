@@ -164,7 +164,13 @@ async function handleProcessSubmit(e) {
                     if (event.type === "init") {
                         setLoadingState(true, `Memproses ${event.total} post Instagram...`, "Mulai mengunduh media & OCR...", 0, 0, event.total);
                     } else if (event.type === "progress") {
-                        currentResults.push(event.result);
+                        // Deduplikasi berdasarkan post_url agar tidak ada duplikasi kartu
+                        const existingIdx = currentResults.findIndex(r => r.post_url === event.result.post_url);
+                        if (existingIdx !== -1) {
+                            currentResults[existingIdx] = event.result;
+                        } else {
+                            currentResults.push(event.result);
+                        }
                         
                         // Update progress bar & counter live
                         setLoadingState(

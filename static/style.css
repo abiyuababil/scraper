@@ -110,6 +110,11 @@ body {
     display: grid;
     grid-template-columns: 420px 1fr;
     gap: 1.5rem;
+    max-width: 100%;
+}
+
+.main-layout > section {
+    min-width: 0; /* Mencegah CSS Grid item melebarkan seluruh halaman */
 }
 
 @media (max-width: 1024px) {
@@ -127,6 +132,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .panel-header {
@@ -286,6 +293,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .result-card {
@@ -296,6 +305,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .card-top {
@@ -317,6 +328,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .gallery-title {
@@ -331,7 +344,9 @@ body {
     display: flex;
     gap: 0.75rem;
     overflow-x: auto;
+    max-width: 100%;
     padding-bottom: 0.5rem;
+    scroll-behavior: smooth;
 }
 
 .media-thumb-wrapper {
@@ -369,12 +384,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-width: 100%;
 }
 
 .quick-links-grid {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+    max-width: 100%;
 }
 
 .link-pill {
