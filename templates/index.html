@@ -101,19 +101,18 @@
         </footer>
     </div>
 
-    <!-- Unclosable Live Progress Modal Overlay -->
-    <div id="progress-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-spinner"></div>
-            <div class="modal-body">
-                <div id="modal-progress-counter" class="modal-counter-badge">0 / 0 (0%)</div>
-                <h3 id="modal-status-title">Memproses Post Instagram...</h3>
-                <p id="modal-status-detail">Mengunduh media & mendeteksi teks via EasyOCR...</p>
-                <div class="modal-progress-bar">
-                    <div id="modal-progress-fill" class="progress-fill"></div>
-                </div>
-                <span class="modal-lock-notice"><i class="fa-solid fa-lock"></i> Mohon tunggu hingga proses selesai (Batal hanya via tutup tab)</span>
+    <!-- Floating Non-blocking Background Progress Widget -->
+    <div id="floating-progress-widget" class="floating-widget hidden">
+        <div class="widget-header">
+            <div class="widget-header-left">
+                <span class="pulse-dot"></span>
+                <strong id="widget-status-title">Memproses post Instagram...</strong>
             </div>
+            <span id="widget-progress-counter" class="widget-badge">0 / 0 (0%)</span>
+        </div>
+        <p id="widget-status-detail">Mengunduh media & mendeteksi teks via EasyOCR...</p>
+        <div class="widget-progress-bar">
+            <div id="widget-progress-fill" class="widget-fill"></div>
         </div>
     </div>
 
@@ -150,6 +149,6 @@
         <span id="toast-message">Teks berhasil disalin!</span>
     </div>
 
-    <script src="/static/app.js?v=2.0.2"></script>
+    <script src="/static/app.js?v=2.0.3"></script>
 </body>
 </html>

@@ -19,38 +19,42 @@ function showToast(message, type = "success") {
 }
 
 function setLoadingState(isLoading, statusText = "", detailText = "", fillPercent = 0, currentCount = 0, totalCount = 0) {
-    const progressModal = document.getElementById("progress-modal");
-    const modalStatusTitle = document.getElementById("modal-status-title");
-    const modalStatusDetail = document.getElementById("modal-status-detail");
-    const modalProgressFill = document.getElementById("modal-progress-fill");
-    const modalProgressCounter = document.getElementById("modal-progress-counter");
+    const floatingWidget = document.getElementById("floating-progress-widget");
+    const widgetStatusTitle = document.getElementById("widget-status-title");
+    const widgetStatusDetail = document.getElementById("widget-status-detail");
+    const widgetProgressFill = document.getElementById("widget-progress-fill");
+    const widgetProgressCounter = document.getElementById("widget-progress-counter");
     const btnSubmit = document.getElementById("btn-submit");
-    const btnFetchAccount = document.getElementById("btn-fetch-account");
-    const btnSample = document.getElementById("btn-sample");
 
     if (isLoading) {
-        if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.innerText = "Memproses..."; }
-        if (btnFetchAccount) btnFetchAccount.disabled = true;
-        if (btnSample) btnSample.disabled = true;
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses (${currentCount}/${totalCount})...`;
+        }
 
-        if (modalStatusTitle && statusText) modalStatusTitle.innerText = statusText;
-        if (modalStatusDetail && detailText) modalStatusDetail.innerText = detailText;
-        if (modalProgressFill) modalProgressFill.style.width = `${fillPercent}%`;
-        if (modalProgressCounter) {
+        if (widgetStatusTitle && statusText) widgetStatusTitle.innerText = statusText;
+        if (widgetStatusDetail && detailText) widgetStatusDetail.innerText = detailText;
+        if (widgetProgressFill) widgetProgressFill.style.width = `${fillPercent}%`;
+        if (widgetProgressCounter) {
             if (totalCount > 0) {
-                modalProgressCounter.innerText = `${currentCount} / ${totalCount} (${fillPercent}%)`;
+                widgetProgressCounter.innerText = `${currentCount} / ${totalCount} (${fillPercent}%)`;
             } else {
-                modalProgressCounter.innerText = `${fillPercent}%`;
+                widgetProgressCounter.innerText = `${fillPercent}%`;
             }
         }
         
-        if (progressModal) progressModal.classList.remove("hidden");
+        if (floatingWidget) floatingWidget.classList.remove("hidden");
     } else {
-        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerText = "Proses & Jalankan OCR"; }
-        if (btnFetchAccount) btnFetchAccount.disabled = false;
-        if (btnSample) btnSample.disabled = false;
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-play"></i> Proses & Jalankan OCR`;
+        }
 
-        if (progressModal) progressModal.classList.add("hidden");
+        if (floatingWidget) {
+            setTimeout(() => {
+                floatingWidget.classList.add("hidden");
+            }, 800);
+        }
     }
 }
 
