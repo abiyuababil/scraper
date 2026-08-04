@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css?v=1.0.3">
+    <link rel="stylesheet" href="/static/style.css?v=1.0.4">
 </head>
 <body>
     <div class="background-globes">
@@ -59,7 +59,7 @@
                         <button type="button" id="btn-sample" class="btn btn-secondary">
                             Isi Contoh Link
                         </button>
-                        <button type="button" id="btn-submit" onclick="if(window.handleProcessSubmit) window.handleProcessSubmit()" class="btn btn-primary">
+                        <button type="button" id="btn-submit" onclick="handleProcessSubmit(event)" class="btn btn-primary">
                             Proses & Jalankan OCR
                         </button>
                     </div>
@@ -124,6 +124,6 @@
         <span id="toast-message">Teks berhasil disalin!</span>
     </div>
 
-    <script src="/static/app.js?v=1.0.3"></script>
+    <script src="/static/app.js?v=1.0.4"></script>
 </body>
 </html>
