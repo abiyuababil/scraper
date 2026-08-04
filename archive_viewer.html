@@ -273,13 +273,25 @@
             display: none !important;
         }
 
-        .btn-close {
-            background: var(--btn-sec-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 0.35rem 0.75rem;
-            border-radius: 4px;
+        .sortable-th {
             cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .sortable-th:hover {
+            background: #23252d !important;
+            color: #ffffff !important;
+        }
+
+        .sort-icon {
+            margin-left: 0.35rem;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .sort-icon.active {
+            color: #60a5fa;
         }
     </style>
 </head>
@@ -304,10 +316,14 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 110px;">No. Aksi</th>
-                            <th style="width: 120px;">Tanggal</th>
-                            <th style="width: 180px;">Sumber</th>
-                            <th style="width: 220px;">File Selebaran</th>
+                            <th id="th-actnum" class="sortable-th" style="width: 130px;" title="Klik untuk mengurutkan berdasarkan Nomor Aksi (Terbaru / Terlama)">
+                                No. Aksi <i id="sort-icon-actnum" class="fa-solid fa-sort sort-icon active"></i>
+                            </th>
+                            <th id="th-date" class="sortable-th" style="width: 135px;" title="Klik untuk mengurutkan berdasarkan Tanggal (Terbaru / Terlama)">
+                                Tanggal <i id="sort-icon-date" class="fa-solid fa-sort sort-icon"></i>
+                            </th>
+                            <th style="width: 170px;">Sumber</th>
+                            <th style="width: 200px;">File Selebaran</th>
                             <th style="width: 220px;">Foto Dokumentasi</th>
                             <th>Teks Surat Terbuka / OCR</th>
                         </tr>
@@ -337,6 +353,8 @@
 
     <script>
         let allArchiveData = [];
+        let currentSortField = "actNum"; // "actNum" atau "date"
+        let currentSortOrder = "desc";   // "desc" (Terbaru/Paling Tinggi) atau "asc" (Terlama/Paling Rendah)
 
         document.addEventListener("DOMContentLoaded", () => {
             fetch("archive.json")
@@ -346,7 +364,7 @@
                 })
                 .then(data => {
                     allArchiveData = data;
-                    renderTable(allArchiveData);
+                    applyFilterAndSort();
                 })
                 .catch(err => {
                     console.warn(err);
@@ -360,26 +378,31 @@
                     document.getElementById("stats-counter").innerText = "0 Data";
                 });
 
-            document.getElementById("search-input").addEventListener("input", (e) => {
-                const q = e.target.value.toLowerCase().trim();
-                if (!q) {
-                    renderTable(allArchiveData);
-                    return;
+            // Event Listeners for Header Click Sorting
+            document.getElementById("th-actnum").addEventListener("click", () => {
+                if (currentSortField === "actNum") {
+                    currentSortOrder = (currentSortOrder === "desc") ? "asc" : "desc";
+                } else {
+                    currentSortField = "actNum";
+                    currentSortOrder = "desc";
                 }
+                updateSortIcons();
+                applyFilterAndSort();
+            });
 
-                const filtered = allArchiveData.filter(item => {
-                    const actNum = String(item.actNum || item.id || "");
-                    const date = String(item.date || "");
-                    const sourceUrl = String(item.sourceUrl || "");
-                    const bodyText = (item.textBody || "").replace(/<[^>]+>/g, "").toLowerCase();
+            document.getElementById("th-date").addEventListener("click", () => {
+                if (currentSortField === "date") {
+                    currentSortOrder = (currentSortOrder === "desc") ? "asc" : "desc";
+                } else {
+                    currentSortField = "date";
+                    currentSortOrder = "desc";
+                }
+                updateSortIcons();
+                applyFilterAndSort();
+            });
 
-                    return actNum.toLowerCase().includes(q) ||
-                        date.toLowerCase().includes(q) ||
-                        sourceUrl.toLowerCase().includes(q) ||
-                        bodyText.includes(q);
-                });
-
-                renderTable(filtered);
+            document.getElementById("search-input").addEventListener("input", () => {
+                applyFilterAndSort();
             });
 
             document.getElementById("modal-close").addEventListener("click", () => {
@@ -392,6 +415,52 @@
                 }
             });
         });
+
+        function updateSortIcons() {
+            const iconAct = document.getElementById("sort-icon-actnum");
+            const iconDate = document.getElementById("sort-icon-date");
+
+            if (currentSortField === "actNum") {
+                iconAct.className = `fa-solid ${currentSortOrder === 'desc' ? 'fa-sort-down' : 'fa-sort-up'} sort-icon active`;
+                iconDate.className = "fa-solid fa-sort sort-icon";
+            } else {
+                iconDate.className = `fa-solid ${currentSortOrder === 'desc' ? 'fa-sort-down' : 'fa-sort-up'} sort-icon active`;
+                iconAct.className = "fa-solid fa-sort sort-icon";
+            }
+        }
+
+        function applyFilterAndSort() {
+            const q = (document.getElementById("search-input").value || "").toLowerCase().trim();
+            
+            let filtered = allArchiveData.filter(item => {
+                if (!q) return true;
+                const actNum = String(item.actNum || item.id || "");
+                const date = String(item.date || "");
+                const sourceUrl = String(item.sourceUrl || "");
+                const bodyText = (item.textBody || "").replace(/<[^>]+>/g, "").toLowerCase();
+
+                return actNum.toLowerCase().includes(q) ||
+                    date.toLowerCase().includes(q) ||
+                    sourceUrl.toLowerCase().includes(q) ||
+                    bodyText.includes(q);
+            });
+
+            // Sorting Logic
+            filtered.sort((a, b) => {
+                if (currentSortField === "actNum") {
+                    const valA = parseInt(a.actNum || a.id || 0, 10);
+                    const valB = parseInt(b.actNum || b.id || 0, 10);
+                    return currentSortOrder === "desc" ? valB - valA : valA - valB;
+                } else if (currentSortField === "date") {
+                    const dateA = a.date || "";
+                    const dateB = b.date || "";
+                    return currentSortOrder === "desc" ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+                }
+                return 0;
+            });
+
+            renderTable(filtered);
+        }
 
         function renderTable(data) {
             const tbody = document.getElementById("table-body");
