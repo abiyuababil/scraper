@@ -27,6 +27,7 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 class ProcessRequest(BaseModel):
     urls: list[str]
+    skip_ocr: bool = False
 
 
 class FetchAccountRequest(BaseModel):
@@ -41,18 +42,20 @@ def process_posts_stream(payload: ProcessRequest):
     """
     Realtime SSE Streaming Endpoint:
     Memproses URL post satu per satu dan mengirimkan progress & hasil secara live.
+    Mendukung opsi skip_ocr untuk ekstraksi kilat metadata tanpa EasyOCR.
     """
     if not payload.urls:
         raise HTTPException(status_code=400, detail="List URL tidak boleh kosong")
 
     clean_urls = [u.strip() for u in payload.urls if u.strip()]
     total_count = len(clean_urls)
+    skip_ocr = payload.skip_ocr
 
     def event_generator():
         yield f"data: {json.dumps({'type': 'init', 'total': total_count})}\n\n"
 
         for idx, url in enumerate(clean_urls, 1):
-            print(f"\n[WebAPI Stream] ({idx}/{total_count}) Memproses: {url}")
+            print(f"\n[WebAPI Stream] ({idx}/{total_count}) Memproses (skip_ocr={skip_ocr}): {url}")
             
             # Fetch detail post
             post_data = fetch_post_details(url)
@@ -69,13 +72,25 @@ def process_posts_stream(payload: ProcessRequest):
                 }
             else:
                 image_urls = post_data.get("image_urls", [])
-                if image_urls:
-                    classified = classify_images(image_urls)
-                else:
-                    classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
 
-                selebaran_url = classified.get("selebaran")
-                selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
+                if skip_ocr:
+                    # Ambil metadata kilat tanpa memanggil EasyOCR
+                    selebaran_url = image_urls[0] if image_urls else None
+                    foto_urls = image_urls[1:] if len(image_urls) > 1 else []
+                    classified = {
+                        "selebaran": selebaran_url,
+                        "foto": foto_urls,
+                        "ocr_texts": {}
+                    }
+                    selebaran_ocr_text = ""
+                else:
+                    if image_urls:
+                        classified = classify_images(image_urls)
+                    else:
+                        classified = {"selebaran": None, "foto": [], "ocr_texts": {}}
+
+                    selebaran_url = classified.get("selebaran")
+                    selebaran_ocr_text = classified.get("ocr_texts", {}).get(selebaran_url, "") if selebaran_url else ""
 
                 result_item = {
                     "kamisan_number": post_data.get("kamisan_number", "?"),

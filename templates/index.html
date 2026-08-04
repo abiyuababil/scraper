@@ -54,7 +54,10 @@
                         <button type="button" id="btn-sample" class="btn btn-secondary">
                             Isi Contoh Link
                         </button>
-                        <button type="button" id="btn-submit" onclick="handleProcessSubmit(event)" class="btn btn-primary">
+                        <button type="button" id="btn-quick-metadata" onclick="handleProcessSubmit(event, true)" class="btn btn-accent" title="Ambil No. Aksi, Tanggal, Link Post, Selebaran & Foto secara kilat tanpa OCR">
+                            <i class="fa-solid fa-bolt"></i> Ambil Metadata (Tanpa OCR)
+                        </button>
+                        <button type="button" id="btn-submit" onclick="handleProcessSubmit(event, false)" class="btn btn-primary">
                             Proses & Jalankan OCR
                         </button>
                     </div>
@@ -149,6 +152,6 @@
         <span id="toast-message">Teks berhasil disalin!</span>
     </div>
 
-    <script src="/static/app.js?v=2.0.3"></script>
+    <script src="/static/app.js?v=2.0.4"></script>
 </body>
 </html>

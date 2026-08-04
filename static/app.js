@@ -115,7 +115,7 @@ function parseInputUrls(text) {
 }
 
 // --- Global Main Submit Process Function (Realtime SSE Streaming) ---
-async function handleProcessSubmit(e) {
+async function handleProcessSubmit(e, skipOcr = false) {
     if (e && e.preventDefault) e.preventDefault();
     
     const urlInput = document.getElementById("url-input");
@@ -130,14 +130,17 @@ async function handleProcessSubmit(e) {
     currentResults = [];
     renderResults(currentResults); // Reset UI & sembunyikan empty state
 
+    const statusTitleText = skipOcr ? `Ambil Metadata Kilat (${rawUrls.length} post)...` : `Memproses ${rawUrls.length} post Instagram...`;
+    const statusDetailText = skipOcr ? `Mengekstrak No. Aksi, Tanggal, Selebaran & Foto tanpa OCR...` : `Mempersiapkan pemrosesan & OCR...`;
+
     // Show initial loading modal progress
-    setLoadingState(true, `Menghubungi server...`, `Mempersiapkan pemrosesan ${rawUrls.length} post...`, 0, 0, rawUrls.length);
+    setLoadingState(true, statusTitleText, statusDetailText, 0, 0, rawUrls.length);
 
     try {
         const response = await fetch("/api/process-stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ urls: rawUrls })
+            body: JSON.stringify({ urls: rawUrls, skip_ocr: skipOcr })
         });
 
         if (!response.ok) {
