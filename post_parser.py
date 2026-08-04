@@ -119,6 +119,7 @@ def _fetch_via_oembed(shortcode: str, num_hint: str = "?") -> dict | None:
 def fetch_post_details(url_or_shortcode: str) -> dict:
     """
     Fetch detail satu post Instagram berdasarkan URL atau Shortcode.
+    Menggunakan Public OEmbed API sebagai prioritas utama untuk menghindari 403 login_required.
     """
     shortcode = extract_shortcode(url_or_shortcode)
     if not shortcode:
@@ -140,9 +141,16 @@ def fetch_post_details(url_or_shortcode: str) -> dict:
         num_hint = num_match.group(1)
 
     post_url = f"https://www.instagram.com/p/{shortcode}/"
-    L = get_loader()
 
+    # PRIORITAS 1: Panggil Public OEmbed API Instagram terlebih dahulu (Bypass 403 Login Required secara instan)
+    oembed_res = _fetch_via_oembed(shortcode, num_hint)
+    if oembed_res and oembed_res.get("success") and oembed_res.get("image_urls"):
+        return oembed_res
+
+    # PRIORITAS 2: Instaloader Fallback (hanya 1x attempt tanpa retries hanging)
     try:
+        L = get_loader()
+        L.context.max_connection_attempts = 1
         post = instaloader.Post.from_shortcode(L.context, shortcode)
         
         caption = post.caption or ""
@@ -169,10 +177,9 @@ def fetch_post_details(url_or_shortcode: str) -> dict:
             "date_utc": post.date_utc.isoformat() if post.date_utc else ""
         }
     except Exception as e:
-        print(f"[PostParser] Instaloader gagal ({e}). Menggunakan Public OEmbed Fallback...")
-        fallback_res = _fetch_via_oembed(shortcode, num_hint)
-        if fallback_res:
-            return fallback_res
+        print(f"[PostParser] Instaloader skipped ({e})")
+        if oembed_res:
+            return oembed_res
 
         return {
             "success": False,
