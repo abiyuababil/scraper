@@ -74,9 +74,10 @@ def process_posts_stream(payload: ProcessRequest):
                 image_urls = post_data.get("image_urls", [])
 
                 if skip_ocr:
-                    # Ambil metadata kilat tanpa memanggil EasyOCR
-                    selebaran_url = image_urls[0] if image_urls else None
-                    foto_urls = image_urls[1:] if len(image_urls) > 1 else []
+                    # Gambar SLIDE TERAKHIR dianggap sebagai Selebaran Naskah Surat Terbuka
+                    # Gambar slide-slide awal (0 hingga sebelum terakhir) dianggap sebagai Foto Dokumentasi Aksi Lapangan
+                    selebaran_url = image_urls[-1] if image_urls else None
+                    foto_urls = image_urls[:-1] if len(image_urls) > 1 else []
                     classified = {
                         "selebaran": selebaran_url,
                         "foto": foto_urls,
