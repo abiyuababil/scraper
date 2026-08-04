@@ -67,21 +67,58 @@ def extract_kamisan_number(caption: str) -> str:
     return "?"
 
 
+def _fetch_via_oembed(shortcode: str, num_hint: str = "?") -> dict | None:
+    """Fallback fetch post via Instagram OEmbed Public API (bebas login_required & 403)."""
+    post_url = f"https://www.instagram.com/p/{shortcode}/"
+    oembed_endpoint = f"https://api.instagram.com/oembed/?url={post_url}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    try:
+        resp = requests.get(oembed_endpoint, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            caption = data.get("title", "")
+            thumb_url = data.get("thumbnail_url", "")
+            
+            kamisan_num = extract_kamisan_number(caption)
+            if kamisan_num == "?" and num_hint != "?":
+                kamisan_num = num_hint
+
+            image_urls = [thumb_url] if thumb_url else []
+
+            # Cek juga halaman embed untuk gambar carousel tambahan
+            try:
+                embed_resp = requests.get(f"{post_url}embed/", headers=headers, timeout=8)
+                if embed_resp.status_code == 200:
+                    matches = re.findall(r'src="([^"]+fbcdn\.net[^"]+)"', embed_resp.text)
+                    for m in matches:
+                        clean_url = m.replace("&amp;", "&")
+                        if clean_url not in image_urls:
+                            image_urls.append(clean_url)
+            except Exception:
+                pass
+
+            print(f"[PostParser] ✅ Berhasil fetch via Public OEmbed Fallback: {shortcode}")
+            return {
+                "success": True,
+                "error": None,
+                "shortcode": shortcode,
+                "post_url": post_url,
+                "caption": caption,
+                "kamisan_number": kamisan_num,
+                "image_urls": image_urls,
+                "date_utc": ""
+            }
+    except Exception as e:
+        print(f"[PostParser] OEmbed fallback error for {shortcode}: {e}")
+    return None
+
+
 def fetch_post_details(url_or_shortcode: str) -> dict:
     """
     Fetch detail satu post Instagram berdasarkan URL atau Shortcode.
-    
-    Return:
-    {
-        "success": bool,
-        "error": str | None,
-        "shortcode": str,
-        "post_url": str,
-        "caption": str,
-        "kamisan_number": str,
-        "image_urls": list[str],
-        "date_utc": str
-    }
     """
     shortcode = extract_shortcode(url_or_shortcode)
     if not shortcode:
@@ -132,14 +169,18 @@ def fetch_post_details(url_or_shortcode: str) -> dict:
             "date_utc": post.date_utc.isoformat() if post.date_utc else ""
         }
     except Exception as e:
-        print(f"[PostParser] Error fetching shortcode {shortcode}: {e}")
+        print(f"[PostParser] Instaloader gagal ({e}). Menggunakan Public OEmbed Fallback...")
+        fallback_res = _fetch_via_oembed(shortcode, num_hint)
+        if fallback_res:
+            return fallback_res
+
         return {
             "success": False,
             "error": f"Gagal memuat post '{shortcode}': {e}",
             "shortcode": shortcode,
             "post_url": post_url,
             "caption": "",
-            "kamisan_number": "?",
+            "kamisan_number": num_hint if num_hint != "?" else "?",
             "image_urls": [],
             "date_utc": ""
         }
