@@ -354,6 +354,8 @@ body {
     flex-direction: column;
     gap: 0.8rem;
     transition: border-color 0.2s ease;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .result-card:hover {
@@ -381,7 +383,59 @@ body {
     line-height: 1.6;
     color: #e5e7eb;
     white-space: pre-wrap;
+    word-break: break-all;
+    overflow-wrap: anywhere;
     border-left: 3px solid var(--primary);
+    max-width: 100%;
+}
+
+/* Interactive Quick Links */
+.quick-links-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0.2rem 0;
+}
+
+.quick-links-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.link-pill:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary);
+    color: white;
+}
+
+.link-pill i {
+    font-size: 0.75rem;
+}
+
+.link-pill.btn-copy-url {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.link-pill.btn-copy-url:hover {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: var(--success);
+    color: var(--success);
 }
 
 .card-actions {
@@ -486,14 +540,16 @@ body {
 
 .ocr-content-box {
     font-family: var(--font-code);
-    font-size: 0.82rem;
-    line-height: 1.6;
-    color: #d1d5db;
+    font-size: 0.84rem;
+    line-height: 1.7;
+    color: #e5e7eb;
     white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
     background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem;
+    padding: 0.85rem;
     border-radius: 6px;
-    max-height: 200px;
+    max-height: 320px;
     overflow-y: auto;
 }
 

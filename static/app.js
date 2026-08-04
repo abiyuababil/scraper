@@ -142,6 +142,38 @@ https://www.instagram.com/p/C-K67890/`;
                 `;
             }
 
+            // Build Quick Interactive Links HTML (Pill buttons)
+            let quickLinksHtml = `<div class="quick-links-section">
+                <h5 class="gallery-title"><i class="fa-solid fa-link"></i> Link Pintas & Salin URL</h5>
+                <div class="quick-links-grid">
+                    <a href="${item.post_url}" target="_blank" class="link-pill">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Sumber Post IG
+                    </a>`;
+            
+            if (item.selebaran) {
+                quickLinksHtml += `
+                    <a href="${item.selebaran}" target="_blank" class="link-pill">
+                        <i class="fa-solid fa-file-image"></i> Buka Link Selebaran
+                    </a>
+                    <button class="link-pill btn-copy-url" data-url="${item.selebaran}">
+                        <i class="fa-solid fa-copy"></i> Salin URL Selebaran
+                    </button>`;
+            }
+
+            if (item.foto && item.foto.length > 0) {
+                item.foto.forEach((fotoUrl, fIdx) => {
+                    quickLinksHtml += `
+                        <a href="${fotoUrl}" target="_blank" class="link-pill">
+                            <i class="fa-solid fa-image"></i> Buka Foto #${fIdx + 1}
+                        </a>
+                        <button class="link-pill btn-copy-url" data-url="${fotoUrl}">
+                            <i class="fa-solid fa-copy"></i> Salin URL Foto #${fIdx + 1}
+                        </button>`;
+                });
+            }
+
+            quickLinksHtml += `</div></div>`;
+
             card.innerHTML = `
                 <div class="card-top">
                     <span class="kamisan-title">Kamisan ke-${item.kamisan_number}</span>
@@ -149,6 +181,8 @@ https://www.instagram.com/p/C-K67890/`;
                 </div>
                 
                 ${mediaPreviewHtml}
+
+                ${quickLinksHtml}
 
                 <div class="section-title"><i class="fa-solid fa-code"></i> Format Teks Terkompilasi</div>
                 <div class="result-text-block">${escapeHtml(formattedText)}</div>
@@ -172,6 +206,15 @@ https://www.instagram.com/p/C-K67890/`;
                 const textToCopy = formatSingleText(results[idx]);
                 copyToClipboard(textToCopy);
                 showToast("Format teks post berhasil disalin!");
+            });
+        });
+
+        // Event listener for individual URL copy buttons
+        document.querySelectorAll(".btn-copy-url").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const urlToCopy = e.currentTarget.getAttribute("data-url");
+                copyToClipboard(urlToCopy);
+                showToast("URL gambar berhasil disalin ke clipboard!");
             });
         });
 

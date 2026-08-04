@@ -34,10 +34,68 @@ def _preprocess_image(img: Image.Image) -> Image.Image:
     return img
 
 
+def _reconstruct_layout_text(raw_results: list) -> str:
+    """
+    Mengurutkan dan mengelompokkan teks OCR berdasarkan koordinat posisi bounding box (Y & X).
+    Menghasilkan string dengan newline (\n) sesuai tata letak baris/paragraf pada selebaran asli.
+    `raw_results` berupa list of [bbox, text, confidence] dari EasyOCR (detail=1).
+    """
+    if not raw_results:
+        return ""
+
+    items = []
+    for item in raw_results:
+        bbox, text, conf = item[0], item[1], item[2]
+        if not text or not text.strip():
+            continue
+        # bbox format: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+        y_top = min(p[1] for p in bbox)
+        y_bottom = max(p[1] for p in bbox)
+        x_left = min(p[0] for p in bbox)
+        y_center = (y_top + y_bottom) / 2
+        height = max(y_bottom - y_top, 10)
+        items.append({
+            "text": text.strip(),
+            "y_center": y_center,
+            "x_left": x_left,
+            "height": height
+        })
+
+    if not items:
+        return ""
+
+    # Urutkan berdasarkan Y (dari atas ke bawah)
+    items.sort(key=lambda item: item["y_center"])
+
+    # Kelompokkan ke dalam baris-baris berdasar kedekatan Y-center
+    lines = []
+    current_line = [items[0]]
+    current_y = items[0]["y_center"]
+    avg_height = items[0]["height"]
+
+    for item in items[1:]:
+        threshold = max(avg_height * 0.65, 12)
+        if abs(item["y_center"] - current_y) <= threshold:
+            current_line.append(item)
+        else:
+            # Urutkan dari kiri ke kanan dalam 1 baris
+            current_line.sort(key=lambda it: it["x_left"])
+            lines.append(" ".join(it["text"] for it in current_line))
+            current_line = [item]
+            current_y = item["y_center"]
+            avg_height = item["height"]
+
+    if current_line:
+        current_line.sort(key=lambda it: it["x_left"])
+        lines.append(" ".join(it["text"] for it in current_line))
+
+    return "\n".join(lines)
+
+
 def run_ocr_on_url(url: str) -> str:
     """
     Download gambar dari URL dan jalankan OCR.
-    Kembalikan teks yang diekstrak (string).
+    Kembalikan teks yang diekstrak berformat paragraf/baris sesuai layout selebaran.
     """
     img = _download_image(url)
     if img is None:
@@ -50,8 +108,10 @@ def run_ocr_on_url(url: str) -> str:
     buf.seek(0)
 
     try:
-        results = _reader.readtext(buf.read(), detail=0)
-        return " ".join(results).strip()
+        # detail=1 (default) mengembalikan tuple (bbox, text, prob)
+        results = _reader.readtext(buf.read(), detail=1)
+        formatted_text = _reconstruct_layout_text(results)
+        return formatted_text
     except Exception as e:
         print(f"  [OCR] Error saat OCR: {e}")
         return ""
