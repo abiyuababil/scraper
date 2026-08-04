@@ -3,6 +3,8 @@
 # ============================================================
 
 import os
+import re
+import json
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
@@ -32,10 +34,27 @@ class FetchAccountRequest(BaseModel):
     limit: int = 50
 
 
+from fastapi.responses import FileResponse
+
 @app.get("/")
 def read_root(request: Request):
     """Render antarmuka utama Web UI."""
     return templates.TemplateResponse(request=request, name="index.html")
+
+
+@app.get("/archive")
+def read_archive_viewer():
+    """Render antarmuka Katalog Arsip Publik."""
+    return FileResponse(os.path.join(BASE_DIR, "archive_viewer.html"))
+
+
+@app.get("/archive.json")
+def get_archive_json():
+    """Endpoint untuk menyajikan file data archive.json."""
+    archive_file = os.path.join(BASE_DIR, "archive.json")
+    if os.path.exists(archive_file):
+        return FileResponse(archive_file, media_type="application/json")
+    return []
 
 
 @app.post("/api/fetch-account-urls")
@@ -121,6 +140,121 @@ def process_posts(payload: ProcessRequest):
         "total_processed": len(results),
         "errors": errors,
         "results": results
+    }
+
+
+class RefineTextRequest(BaseModel):
+    text: str
+
+
+class ArchiveSaveRequest(BaseModel):
+    items: list[dict]
+
+
+@app.post("/api/refine-text")
+def refine_ocr_text(payload: RefineTextRequest):
+    """
+    Auto-Refine / AI Formatter untuk merapikan teks hasil OCR:
+    - Menyambungkan kata terputus karena baris baru / strip (hyphenation).
+    - Merapikan spasi ganda, tanda baca, dan kapitalisasi awal kalimat.
+    - Menyusun ulang paragraf agar alur kalimatnya koheren dan enak dibaca.
+    """
+    raw_text = payload.text or ""
+    if not raw_text.strip():
+        return {"refined_text": ""}
+
+    # 1. Obati kata terputus oleh tanda hubung di akhir baris (e.g. "ke- \nadilan" -> "keadilan")
+    text = re.sub(r'(\w+)\s*[\-–—]\s*\n\s*(\w+)', r'\1\2', raw_text)
+    
+    # 2. Obati baris terputus tengah kalimat (jika baris tidak diakhiri tanda titik/tanya/seru, gabungkan)
+    lines = text.split("\n")
+    paragraphs = []
+    current_para = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            if current_para:
+                paragraphs.append(" ".join(current_para))
+                current_para = []
+            continue
+
+        if current_para:
+            prev_line = current_para[-1]
+            # Jika baris sebelumnya tidak diakhiri titik/tanya/seru/titik koma/titik dua
+            if not re.search(r'[.:!?;\-\"]$', prev_line):
+                current_para[-1] = f"{prev_line} {stripped}"
+            else:
+                current_para.append(stripped)
+        else:
+            current_para.append(stripped)
+
+    if current_para:
+        paragraphs.append(" ".join(current_para))
+
+    # 3. Rapikan spasi ganda
+    refined_paragraphs = []
+    for p in paragraphs:
+        p_clean = re.sub(r'[ \t]+', ' ', p)
+        # Rapikan spasi sebelum tanda baca (e.g. "kata , " -> "kata, ")
+        p_clean = re.sub(r'\s+([,.:!?;])', r'\1', p_clean)
+        refined_paragraphs.append(p_clean)
+
+    refined_text = "\n\n".join(refined_paragraphs)
+    return {"refined_text": refined_text}
+
+
+@app.post("/api/archive/save")
+def save_to_archive(payload: ArchiveSaveRequest):
+    """Simpan atau perbarui data ke file archive.json permanen."""
+    archive_file = os.path.join(BASE_DIR, "archive.json")
+    
+    existing_data = []
+    if os.path.exists(archive_file):
+        try:
+            with open(archive_file, "r", encoding="utf-8") as f:
+                existing_data = json.load(f)
+        except Exception:
+            existing_data = []
+
+    # Map existing id/actNum
+    existing_map = {str(item.get("actNum") or item.get("id")): idx for idx, item in enumerate(existing_data)}
+    
+    added_count = 0
+    updated_count = 0
+
+    for new_item in payload.items:
+        act_num = str(new_item.get("actNum") or new_item.get("id") or "")
+        if not act_num:
+            continue
+
+        if act_num in existing_map:
+            idx = existing_map[act_num]
+            existing_data[idx] = new_item
+            updated_count += 1
+        else:
+            existing_data.append(new_item)
+            existing_map[act_num] = len(existing_data) - 1
+            added_count += 1
+
+    # Urutkan berdasarkan actNum numerik (terendah ke tertinggi)
+    def parse_act(x):
+        try:
+            return int(x.get("actNum") or x.get("id") or 0)
+        except Exception:
+            return 0
+            
+    existing_data.sort(key=parse_act)
+
+    with open(archive_file, "w", encoding="utf-8") as f:
+        json.dump(existing_data, f, indent=2, ensure_ascii=False)
+
+    return {
+        "success": True,
+        "total_archived": len(existing_data),
+        "added": added_count,
+        "updated": updated_count,
+        "archive_file": archive_file
     }
 
 

@@ -285,9 +285,14 @@ function renderResults(results) {
                             <div class="side-right-ocr">
                                 <div class="ocr-header">
                                     <h5 class="gallery-title"><i class="fa-solid fa-edit"></i> Edit / Verifikasi Teks OCR</h5>
-                                    <button class="btn btn-sm btn-outline btn-copy-ocr" data-index="${index}">
-                                        <i class="fa-solid fa-copy"></i> Salin Teks OCR
-                                    </button>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-sm btn-accent btn-ai-refine" data-index="${index}">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Rapikan Paragraf
+                                        </button>
+                                        <button class="btn btn-sm btn-outline btn-copy-ocr" data-index="${index}">
+                                            <i class="fa-solid fa-copy"></i> Salin Teks OCR
+                                        </button>
+                                    </div>
                                 </div>
                                 <textarea class="ocr-textarea ocr-edit-input" data-index="${index}" id="card-ocr-textarea-${index}" placeholder="Teks OCR akan muncul di sini...">${escapeHtml(item.selebaran_ocr_text || "")}</textarea>
                             </div>
@@ -438,6 +443,43 @@ function renderResults(results) {
         });
     });
 
+    // Event listener for AI Refine Paragraphs button
+    document.querySelectorAll(".btn-ai-refine").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const idx = e.currentTarget.getAttribute("data-index");
+            const item = results[idx];
+            if (!item || !item.selebaran_ocr_text) {
+                showToast("Tidak ada teks OCR untuk dirapikan!", "warning");
+                return;
+            }
+
+            setLoadingState(true, "AI sedang merapikan susunan kalimat...", "Menghilangkan kata terputus & menyusun paragraf...");
+
+            try {
+                const resp = await fetch("/api/refine-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: item.selebaran_ocr_text })
+                });
+
+                if (!resp.ok) throw new Error("Gagal merapikan teks");
+
+                const data = await resp.json();
+                if (data.refined_text) {
+                    item.selebaran_ocr_text = data.refined_text;
+                    const cardTextarea = document.getElementById(`card-ocr-textarea-${idx}`);
+                    if (cardTextarea) cardTextarea.value = data.refined_text;
+                    showToast("✨ Teks OCR berhasil dirapikan secara otomatis!", "success");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal merapikan teks", "error");
+            } finally {
+                setLoadingState(false);
+            }
+        });
+    });
+
     // Event listener for OCR text copy buttons
     document.querySelectorAll(".btn-copy-ocr").forEach(btn => {
         btn.addEventListener("click", (e) => {
@@ -485,6 +527,85 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnExportCsv = document.getElementById("btn-export-csv");
     const btnExportJanganDiam = document.getElementById("btn-export-jangandiam");
     const btnExportTxt = document.getElementById("btn-export-txt");
+    const btnSaveArchive = document.getElementById("btn-save-archive");
+
+    if (btnSaveArchive) {
+        btnSaveArchive.addEventListener("click", async () => {
+            if (!currentResults.length) return;
+
+            const archiveSchema = currentResults.map(item => {
+                const actNum = item.kamisan_number || "";
+                const dateStr = item.date_utc ? item.date_utc.split("T")[0] : "";
+                const ocrText = item.selebaran_ocr_text || "";
+                
+                const paragraphs = ocrText.split("\n")
+                                          .filter(p => p.trim().length > 0)
+                                          .map(p => `<p>${escapeHtml(p)}</p>`)
+                                          .join("");
+
+                const attachments = [];
+                if (item.selebaran) {
+                    attachments.push({
+                        "type": "naskah",
+                        "title": "Hasil Pindaian Surat Terbuka",
+                        "subtitle": `Surat Terbuka Aksi Kamisan #${actNum}`,
+                        "icon": "lucide:file-text",
+                        "imageUrl": item.selebaran,
+                        "footer": "Naskah Surat Terbuka"
+                    });
+                }
+
+                if (item.foto && item.foto.length > 0) {
+                    item.foto.forEach((fotoUrl, fIdx) => {
+                        attachments.push({
+                            "type": "foto",
+                            "title": "Dokumentasi Aksi Lapangan",
+                            "subtitle": `Foto Aksi Kamisan #${actNum} (${fIdx + 1})`,
+                            "icon": "lucide:camera",
+                            "imageUrl": fotoUrl,
+                            "footer": `Foto Aksi #${actNum}`
+                        });
+                    });
+                }
+
+                return {
+                    "id": actNum,
+                    "actNum": actNum,
+                    "docNum": "",
+                    "date": dateStr,
+                    "title": `Surat Terbuka #${actNum}`,
+                    "tags": ["Aksi Kamisan"],
+                    "summary": item.caption ? item.caption.substring(0, 180).replace(/["\r\n]/g, " ") : "",
+                    "insights": [],
+                    "casesReferred": [],
+                    "source": "Selebaran Aksi Kamisan",
+                    "sourceUrl": item.post_url,
+                    "textBody": paragraphs || "<p></p>",
+                    "attachments": attachments
+                };
+            });
+
+            setLoadingState(true, "Menyimpan ke file archive.json...", "Memperbarui database katalog publik...");
+
+            try {
+                const resp = await fetch("/api/archive/save", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ items: archiveSchema })
+                });
+
+                if (!resp.ok) throw new Error("Gagal menyimpan ke archive.json");
+
+                const resData = await resp.json();
+                showToast(`✅ Berhasil menyimpan ${resData.added} data baru (${resData.updated} diperbarui) ke archive.json!`, "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal menyimpan ke archive.json", "error");
+            } finally {
+                setLoadingState(false);
+            }
+        });
+    }
 
     if (btnSubmit) {
         btnSubmit.addEventListener("click", handleProcessSubmit);
