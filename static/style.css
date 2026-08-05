@@ -241,14 +241,20 @@ body {
     background: #332f1b;
 }
 
-.btn-sm {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.78rem;
+.btn-delete-card {
+    background: #1e1518;
+    color: #ef4444;
+    border: 1px solid #3b1d24;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.76rem;
+    border-radius: 4px;
+    transition: all 0.15s;
 }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.btn-delete-card:hover {
+    background: #3b1d24;
+    color: #fca5a5;
+    border-color: #ef4444;
 }
 
 /* Results Section */

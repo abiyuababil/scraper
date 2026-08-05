@@ -391,7 +391,12 @@ function renderResults(results) {
         card.innerHTML = `
             <div class="card-top">
                 <span class="kamisan-title">Kamisan ke-${item.kamisan_number}</span>
-                <span class="help-text">Post #${index + 1}</span>
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <span class="help-text">Post #${index + 1}</span>
+                    <button class="btn btn-sm btn-delete-card" data-index="${index}" title="Hapus kartu hasil ini agar tidak ikut disimpan ke archive.json">
+                        <i class="fa-solid fa-trash-can"></i> Hapus
+                    </button>
+                </div>
             </div>
             
             ${mediaPreviewHtml}
@@ -410,6 +415,18 @@ function renderResults(results) {
         `;
 
         resultsContainer.appendChild(card);
+    });
+
+    // Event listener for Delete Card buttons
+    document.querySelectorAll(".btn-delete-card").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const idx = parseInt(e.currentTarget.getAttribute("data-index"), 10);
+            if (isNaN(idx) || idx < 0 || idx >= currentResults.length) return;
+
+            currentResults.splice(idx, 1);
+            renderResults(currentResults);
+            showToast("🗑️ Kartu hasil berhasil dihapus dari daftar!", "warning");
+        });
     });
 
     // Event Listeners for Collapsible Headers
